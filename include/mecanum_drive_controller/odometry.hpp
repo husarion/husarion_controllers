@@ -19,15 +19,15 @@
  * Author: Paul Mathieu
  */
 
-#ifndef DIFF_DRIVE_CONTROLLER__ODOMETRY_HPP_
-#define DIFF_DRIVE_CONTROLLER__ODOMETRY_HPP_
+#ifndef MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_
+#define MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_
 
 #include <cmath>
 
 #include "rclcpp/time.hpp"
 #include "rcppmath/rolling_mean_accumulator.hpp"
 
-namespace diff_drive_controller
+namespace mecanum_drive_controller
 {
 class Odometry
 {
@@ -108,6 +108,6 @@ private:
   RollingMeanAccumulator angular_accumulator_;
 };
 
-}  // namespace diff_drive_controller
+}  // namespace mecanum_drive_controller
 
-#endif  // DIFF_DRIVE_CONTROLLER__ODOMETRY_HPP_
+#endif  // MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_

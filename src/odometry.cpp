@@ -16,9 +16,9 @@
  * Author: Enrique Fernández
  */
 
-#include "diff_drive_controller/odometry.hpp"
+#include "mecanum_drive_controller/odometry.hpp"
 
-namespace diff_drive_controller
+namespace mecanum_drive_controller
 {
 Odometry::Odometry(size_t velocity_rolling_window_size)
   : timestamp_(0.0)
@@ -180,4 +180,4 @@ void Odometry::resetAccumulators()
   angular_accumulator_ = RollingMeanAccumulator(velocity_rolling_window_size_);
 }
 
-}  // namespace diff_drive_controller
+}  // namespace mecanum_drive_controller

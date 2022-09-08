@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include "diff_drive_controller/diff_drive_controller.hpp"
+#include "mecanum_drive_controller/mecanum_drive_controller.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
 #include "rclcpp/logging.hpp"
@@ -37,7 +37,7 @@ constexpr auto DEFAULT_ODOMETRY_TOPIC = "~/odom";
 constexpr auto DEFAULT_TRANSFORM_TOPIC = "/tf";
 }  // namespace
 
-namespace diff_drive_controller
+namespace mecanum_drive_controller
 {
 using namespace std::chrono_literals;
 using controller_interface::interface_configuration_type;
@@ -46,16 +46,16 @@ using hardware_interface::HW_IF_POSITION;
 using hardware_interface::HW_IF_VELOCITY;
 using lifecycle_msgs::msg::State;
 
-DiffDriveController::DiffDriveController() : controller_interface::ControllerInterface()
+MecanumDriveController::MecanumDriveController() : controller_interface::ControllerInterface()
 {
 }
 
-const char* DiffDriveController::feedback_type() const
+const char* MecanumDriveController::feedback_type() const
 {
   return odom_params_.position_feedback ? HW_IF_POSITION : HW_IF_VELOCITY;
 }
 
-controller_interface::CallbackReturn DiffDriveController::on_init()
+controller_interface::CallbackReturn MecanumDriveController::on_init()
 {
   try
   {
@@ -126,7 +126,7 @@ controller_interface::CallbackReturn DiffDriveController::on_init()
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-InterfaceConfiguration DiffDriveController::command_interface_configuration() const
+InterfaceConfiguration MecanumDriveController::command_interface_configuration() const
 {
   std::vector<std::string> conf_names;
   conf_names.push_back(front_left_wheel_name_ + "/" + HW_IF_VELOCITY);
@@ -136,7 +136,7 @@ InterfaceConfiguration DiffDriveController::command_interface_configuration() co
   return { interface_configuration_type::INDIVIDUAL, conf_names };
 }
 
-InterfaceConfiguration DiffDriveController::state_interface_configuration() const
+InterfaceConfiguration MecanumDriveController::state_interface_configuration() const
 {
   std::vector<std::string> conf_names;
   conf_names.push_back(front_left_wheel_name_ + "/" + HW_IF_VELOCITY);
@@ -146,7 +146,8 @@ InterfaceConfiguration DiffDriveController::state_interface_configuration() cons
   return { interface_configuration_type::INDIVIDUAL, conf_names };
 }
 
-controller_interface::return_type DiffDriveController::update(const rclcpp::Time& time, const rclcpp::Duration& period)
+controller_interface::return_type MecanumDriveController::update(const rclcpp::Time& time,
+                                                                 const rclcpp::Duration& period)
 {
   auto logger = get_node()->get_logger();
   if (get_state().id() == State::PRIMARY_STATE_INACTIVE)
@@ -302,7 +303,7 @@ controller_interface::return_type DiffDriveController::update(const rclcpp::Time
   return controller_interface::return_type::OK;
 }
 
-controller_interface::CallbackReturn DiffDriveController::on_configure(const rclcpp_lifecycle::State&)
+controller_interface::CallbackReturn MecanumDriveController::on_configure(const rclcpp_lifecycle::State&)
 {
   auto logger = get_node()->get_logger();
 
@@ -506,7 +507,7 @@ controller_interface::CallbackReturn DiffDriveController::on_configure(const rcl
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-controller_interface::CallbackReturn DiffDriveController::on_activate(const rclcpp_lifecycle::State&)
+controller_interface::CallbackReturn MecanumDriveController::on_activate(const rclcpp_lifecycle::State&)
 {
   const auto front_left_result = configure_wheel(front_left_wheel_name_, registered_front_left_wheel_handle_);
   const auto front_right_result = configure_wheel(front_right_wheel_name_, registered_front_right_wheel_handle_);
@@ -535,13 +536,13 @@ controller_interface::CallbackReturn DiffDriveController::on_activate(const rclc
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-controller_interface::CallbackReturn DiffDriveController::on_deactivate(const rclcpp_lifecycle::State&)
+controller_interface::CallbackReturn MecanumDriveController::on_deactivate(const rclcpp_lifecycle::State&)
 {
   subscriber_is_active_ = false;
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-controller_interface::CallbackReturn DiffDriveController::on_cleanup(const rclcpp_lifecycle::State&)
+controller_interface::CallbackReturn MecanumDriveController::on_cleanup(const rclcpp_lifecycle::State&)
 {
   if (!reset())
   {
@@ -552,7 +553,7 @@ controller_interface::CallbackReturn DiffDriveController::on_cleanup(const rclcp
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-controller_interface::CallbackReturn DiffDriveController::on_error(const rclcpp_lifecycle::State&)
+controller_interface::CallbackReturn MecanumDriveController::on_error(const rclcpp_lifecycle::State&)
 {
   if (!reset())
   {
@@ -561,7 +562,7 @@ controller_interface::CallbackReturn DiffDriveController::on_error(const rclcpp_
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-bool DiffDriveController::reset()
+bool MecanumDriveController::reset()
 {
   odometry_.resetOdometry();
 
@@ -583,12 +584,12 @@ bool DiffDriveController::reset()
   return true;
 }
 
-controller_interface::CallbackReturn DiffDriveController::on_shutdown(const rclcpp_lifecycle::State&)
+controller_interface::CallbackReturn MecanumDriveController::on_shutdown(const rclcpp_lifecycle::State&)
 {
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-void DiffDriveController::halt()
+void MecanumDriveController::halt()
 {
   registered_front_left_wheel_handle_->velocity.get().set_value(0.0);
   registered_front_right_wheel_handle_->velocity.get().set_value(0.0);
@@ -597,7 +598,7 @@ void DiffDriveController::halt()
 }
 
 controller_interface::CallbackReturn
-DiffDriveController::configure_wheel(const std::string& wheel_name, std::unique_ptr<WheelHandle>& registered_handle)
+MecanumDriveController::configure_wheel(const std::string& wheel_name, std::unique_ptr<WheelHandle>& registered_handle)
 {
   auto logger = get_node()->get_logger();
 
@@ -635,8 +636,8 @@ DiffDriveController::configure_wheel(const std::string& wheel_name, std::unique_
 
   return controller_interface::CallbackReturn::SUCCESS;
 }
-}  // namespace diff_drive_controller
+}  // namespace mecanum_drive_controller
 
 #include "class_loader/register_macro.hpp"
 
-CLASS_LOADER_REGISTER_CLASS(diff_drive_controller::DiffDriveController, controller_interface::ControllerInterface)
+CLASS_LOADER_REGISTER_CLASS(mecanum_drive_controller::MecanumDriveController, controller_interface::ControllerInterface)

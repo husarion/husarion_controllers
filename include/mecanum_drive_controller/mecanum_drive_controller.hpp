@@ -16,8 +16,8 @@
  * Author: Bence Magyar, Enrique Fernández, Manuel Meraz
  */
 
-#ifndef DIFF_DRIVE_CONTROLLER__DIFF_DRIVE_CONTROLLER_HPP_
-#define DIFF_DRIVE_CONTROLLER__DIFF_DRIVE_CONTROLLER_HPP_
+#ifndef MECANUM_DRIVE_CONTROLLER__MECANUM_DRIVE_CONTROLLER_HPP_
+#define MECANUM_DRIVE_CONTROLLER__MECANUM_DRIVE_CONTROLLER_HPP_
 
 #include <chrono>
 #include <cmath>
@@ -27,9 +27,9 @@
 #include <vector>
 
 #include "controller_interface/controller_interface.hpp"
-#include "diff_drive_controller/odometry.hpp"
-#include "diff_drive_controller/speed_limiter.hpp"
-#include "diff_drive_controller/visibility_control.h"
+#include "mecanum_drive_controller/odometry.hpp"
+#include "mecanum_drive_controller/speed_limiter.hpp"
+#include "mecanum_drive_controller/visibility_control.h"
 #include "geometry_msgs/msg/twist.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "hardware_interface/handle.hpp"
@@ -42,44 +42,44 @@
 #include "realtime_tools/realtime_publisher.h"
 #include "tf2_msgs/msg/tf_message.hpp"
 
-namespace diff_drive_controller
+namespace mecanum_drive_controller
 {
-class DiffDriveController : public controller_interface::ControllerInterface
+class MecanumDriveController : public controller_interface::ControllerInterface
 {
   using Twist = geometry_msgs::msg::TwistStamped;
 
 public:
-  DIFF_DRIVE_CONTROLLER_PUBLIC
-  DiffDriveController();
+  MECANUM_DRIVE_CONTROLLER_PUBLIC
+  MecanumDriveController();
 
-  DIFF_DRIVE_CONTROLLER_PUBLIC
+  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::InterfaceConfiguration command_interface_configuration() const override;
 
-  DIFF_DRIVE_CONTROLLER_PUBLIC
+  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::InterfaceConfiguration state_interface_configuration() const override;
 
-  DIFF_DRIVE_CONTROLLER_PUBLIC
+  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::return_type update(const rclcpp::Time& time, const rclcpp::Duration& period) override;
 
-  DIFF_DRIVE_CONTROLLER_PUBLIC
+  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_init() override;
 
-  DIFF_DRIVE_CONTROLLER_PUBLIC
+  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_configure(const rclcpp_lifecycle::State& previous_state) override;
 
-  DIFF_DRIVE_CONTROLLER_PUBLIC
+  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
 
-  DIFF_DRIVE_CONTROLLER_PUBLIC
+  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_deactivate(const rclcpp_lifecycle::State& previous_state) override;
 
-  DIFF_DRIVE_CONTROLLER_PUBLIC
+  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_cleanup(const rclcpp_lifecycle::State& previous_state) override;
 
-  DIFF_DRIVE_CONTROLLER_PUBLIC
+  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_error(const rclcpp_lifecycle::State& previous_state) override;
 
-  DIFF_DRIVE_CONTROLLER_PUBLIC
+  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_shutdown(const rclcpp_lifecycle::State& previous_state) override;
 
 protected:
@@ -166,5 +166,5 @@ protected:
   bool reset();
   void halt();
 };
-}  // namespace diff_drive_controller
-#endif  // DIFF_DRIVE_CONTROLLER__DIFF_DRIVE_CONTROLLER_HPP_
+}  // namespace mecanum_drive_controller
+#endif  // MECANUM_DRIVE_CONTROLLER__MECANUM_DRIVE_CONTROLLER_HPP_

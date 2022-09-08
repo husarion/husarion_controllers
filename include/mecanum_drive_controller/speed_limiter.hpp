@@ -16,12 +16,12 @@
  * Author: Enrique Fernández
  */
 
-#ifndef DIFF_DRIVE_CONTROLLER__SPEED_LIMITER_HPP_
-#define DIFF_DRIVE_CONTROLLER__SPEED_LIMITER_HPP_
+#ifndef MECANUM_DRIVE_CONTROLLER__SPEED_LIMITER_HPP_
+#define MECANUM_DRIVE_CONTROLLER__SPEED_LIMITER_HPP_
 
 #include <cmath>
 
-namespace diff_drive_controller
+namespace mecanum_drive_controller
 {
 class SpeedLimiter
 {
@@ -98,6 +98,6 @@ private:
   double max_jerk_;
 };
 
-}  // namespace diff_drive_controller
+}  // namespace mecanum_drive_controller
 
-#endif  // DIFF_DRIVE_CONTROLLER__SPEED_LIMITER_HPP_
+#endif  // MECANUM_DRIVE_CONTROLLER__SPEED_LIMITER_HPP_

@@ -1,10 +1,10 @@
-.. _diff_drive_controller_userdoc:
+.. _mecanum_drive_controller_userdoc:
 
-diff_drive_controller
+mecanum_drive_controller
 =====================
 
-Controller for mobile robots with differential drive.
-Input for control are robot body velocity commands which are translated to wheel commands for the differential drive base.
+Controller for mobile robots with mecanum drive.
+Input for control are robot body velocity commands which are translated to wheel commands for the mecanum drive base.
 Odometry is computed from hardware feedback and published.
 
 Velocity commands

@@ -19,19 +19,18 @@
 #include "rclcpp/utilities.hpp"
 #include "ros2_control_test_assets/descriptions.hpp"
 
-TEST(TestLoadDiffDriveController, load_controller)
+TEST(TestLoadMecanumDriveController, load_controller)
 {
   rclcpp::init(0, nullptr);
 
-  std::shared_ptr<rclcpp::Executor> executor =
-    std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  std::shared_ptr<rclcpp::Executor> executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
 
   controller_manager::ControllerManager cm(
-    std::make_unique<hardware_interface::ResourceManager>(ros2_control_test_assets::diffbot_urdf),
-    executor, "test_controller_manager");
+      std::make_unique<hardware_interface::ResourceManager>(ros2_control_test_assets::diffbot_urdf), executor,
+      "test_controller_manager");
 
   ASSERT_NO_THROW(
-    cm.load_controller("test_diff_drive_controller", "diff_drive_controller/DiffDriveController"));
+      cm.load_controller("test_mecanum_drive_controller", "mecanum_drive_controller/MecanumDriveController"));
 
   rclcpp::shutdown();
 }
