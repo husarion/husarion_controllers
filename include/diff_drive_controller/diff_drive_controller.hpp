@@ -90,24 +90,27 @@ protected:
   };
 
   const char* feedback_type() const;
-  controller_interface::CallbackReturn configure_side(const std::string& side,
-                                                      const std::vector<std::string>& wheel_names,
-                                                      std::vector<WheelHandle>& registered_handles);
+  controller_interface::CallbackReturn configure_wheel(const std::string& wheel_name,
+                                                       std::unique_ptr<WheelHandle>& registered_handle);
 
-  std::vector<std::string> left_wheel_names_;
-  std::vector<std::string> right_wheel_names_;
+  std::string front_left_wheel_name_;
+  std::string front_right_wheel_name_;
+  std::string rear_left_wheel_name_;
+  std::string rear_right_wheel_name_;
 
-  std::vector<WheelHandle> registered_left_wheel_handles_;
-  std::vector<WheelHandle> registered_right_wheel_handles_;
+  std::unique_ptr<WheelHandle> registered_front_left_wheel_handle_;
+  std::unique_ptr<WheelHandle> registered_front_right_wheel_handle_;
+  std::unique_ptr<WheelHandle> registered_rear_left_wheel_handle_;
+  std::unique_ptr<WheelHandle> registered_rear_right_wheel_handle_;
 
   struct WheelParams
   {
-    size_t wheels_per_side = 0;
-    double separation = 0.0;  // w.r.t. the midpoint of the wheel width
-    double radius = 0.0;      // Assumed to be the same for both wheels
-    double separation_multiplier = 1.0;
-    double left_radius_multiplier = 1.0;
-    double right_radius_multiplier = 1.0;
+    double separation_x = 0.0;  // w.r.t. the midpoint of the wheel width
+    double separation_y = 0.0;  // w.r.t. the midpoint of the wheel width
+    double radius = 0.0;        // Assumed to be the same for both wheels
+    double separation_x_multiplier = 1.0;
+    double separation_y_multiplier = 1.0;
+    double radius_multiplier = 1.0;
   } wheel_params_;
 
   struct OdometryParams
@@ -142,7 +145,8 @@ protected:
   std::queue<Twist> previous_commands_;  // last two commands
 
   // speed limiters
-  SpeedLimiter limiter_linear_;
+  SpeedLimiter limiter_linear_x_;
+  SpeedLimiter limiter_linear_y_;
   SpeedLimiter limiter_angular_;
 
   bool publish_limited_velocity_ = false;
