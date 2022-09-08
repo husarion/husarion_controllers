@@ -24,19 +24,18 @@
 
 namespace diff_drive_controller
 {
-SpeedLimiter::SpeedLimiter(
-  bool has_velocity_limits, bool has_acceleration_limits, bool has_jerk_limits, double min_velocity,
-  double max_velocity, double min_acceleration, double max_acceleration, double min_jerk,
-  double max_jerk)
-: has_velocity_limits_(has_velocity_limits),
-  has_acceleration_limits_(has_acceleration_limits),
-  has_jerk_limits_(has_jerk_limits),
-  min_velocity_(min_velocity),
-  max_velocity_(max_velocity),
-  min_acceleration_(min_acceleration),
-  max_acceleration_(max_acceleration),
-  min_jerk_(min_jerk),
-  max_jerk_(max_jerk)
+SpeedLimiter::SpeedLimiter(bool has_velocity_limits, bool has_acceleration_limits, bool has_jerk_limits,
+                           double min_velocity, double max_velocity, double min_acceleration, double max_acceleration,
+                           double min_jerk, double max_jerk)
+  : has_velocity_limits_(has_velocity_limits)
+  , has_acceleration_limits_(has_acceleration_limits)
+  , has_jerk_limits_(has_jerk_limits)
+  , min_velocity_(min_velocity)
+  , max_velocity_(max_velocity)
+  , min_acceleration_(min_acceleration)
+  , max_acceleration_(max_acceleration)
+  , min_jerk_(min_jerk)
+  , max_jerk_(max_jerk)
 {
   // Check if limits are valid, max must be specified, min defaults to -max if unspecified
   if (has_velocity_limits_)
@@ -54,8 +53,7 @@ SpeedLimiter::SpeedLimiter(
   {
     if (std::isnan(max_acceleration_))
     {
-      throw std::runtime_error(
-        "Cannot apply acceleration limits if max_acceleration is not specified");
+      throw std::runtime_error("Cannot apply acceleration limits if max_acceleration is not specified");
     }
     if (std::isnan(min_acceleration_))
     {
@@ -75,7 +73,7 @@ SpeedLimiter::SpeedLimiter(
   }
 }
 
-double SpeedLimiter::limit(double & v, double v0, double v1, double dt)
+double SpeedLimiter::limit(double& v, double v0, double v1, double dt)
 {
   const double tmp = v;
 
@@ -86,7 +84,7 @@ double SpeedLimiter::limit(double & v, double v0, double v1, double dt)
   return tmp != 0.0 ? v / tmp : 1.0;
 }
 
-double SpeedLimiter::limit_velocity(double & v)
+double SpeedLimiter::limit_velocity(double& v)
 {
   const double tmp = v;
 
@@ -98,7 +96,7 @@ double SpeedLimiter::limit_velocity(double & v)
   return tmp != 0.0 ? v / tmp : 1.0;
 }
 
-double SpeedLimiter::limit_acceleration(double & v, double v0, double dt)
+double SpeedLimiter::limit_acceleration(double& v, double v0, double dt)
 {
   const double tmp = v;
 
@@ -115,7 +113,7 @@ double SpeedLimiter::limit_acceleration(double & v, double v0, double dt)
   return tmp != 0.0 ? v / tmp : 1.0;
 }
 
-double SpeedLimiter::limit_jerk(double & v, double v0, double v1, double dt)
+double SpeedLimiter::limit_jerk(double& v, double v0, double v1, double dt)
 {
   const double tmp = v;
 

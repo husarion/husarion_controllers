@@ -34,17 +34,32 @@ class Odometry
 public:
   explicit Odometry(size_t velocity_rolling_window_size = 10);
 
-  void init(const rclcpp::Time & time);
-  bool update(double left_pos, double right_pos, const rclcpp::Time & time);
-  bool updateFromVelocity(double left_vel, double right_vel, const rclcpp::Time & time);
-  void updateOpenLoop(double linear, double angular, const rclcpp::Time & time);
+  void init(const rclcpp::Time& time);
+  bool update(double left_pos, double right_pos, const rclcpp::Time& time);
+  bool updateFromVelocity(double left_vel, double right_vel, const rclcpp::Time& time);
+  void updateOpenLoop(double linear, double angular, const rclcpp::Time& time);
   void resetOdometry();
 
-  double getX() const { return x_; }
-  double getY() const { return y_; }
-  double getHeading() const { return heading_; }
-  double getLinear() const { return linear_; }
-  double getAngular() const { return angular_; }
+  double getX() const
+  {
+    return x_;
+  }
+  double getY() const
+  {
+    return y_;
+  }
+  double getHeading() const
+  {
+    return heading_;
+  }
+  double getLinear() const
+  {
+    return linear_;
+  }
+  double getAngular() const
+  {
+    return angular_;
+  }
 
   void setWheelParams(double wheel_separation, double left_wheel_radius, double right_wheel_radius);
   void setVelocityRollingWindowSize(size_t velocity_rolling_window_size);
