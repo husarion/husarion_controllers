@@ -1,4 +1,5 @@
 // Copyright 2020 PAL Robotics S.L.
+// Copyright 2022 Husarion
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +19,9 @@
  * Author: Enrique Fernández
  * Author: Paul Mathieu
  */
+
+// Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers)
+// Author: Maciej Stępień
 
 #ifndef MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_
 #define MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_

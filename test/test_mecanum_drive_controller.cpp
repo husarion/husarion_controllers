@@ -1,4 +1,5 @@
 // Copyright 2020 PAL Robotics SL.
+// Copyright 2022 Husarion
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers)
 
 #include <gmock/gmock.h>
 
@@ -35,6 +38,8 @@ using hardware_interface::LoanedCommandInterface;
 using hardware_interface::LoanedStateInterface;
 using lifecycle_msgs::msg::State;
 using testing::SizeIs;
+
+// TODO: add tests for mecanum drive (non zero y velocity)
 
 class TestableMecanumDriveController : public mecanum_drive_controller::MecanumDriveController
 {

@@ -1,3 +1,5 @@
+# Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers)
+
 test_mecanum_drive_controller:
   ros__parameters:
     left_wheel_names: ["left_wheels"]
@@ -5,7 +7,7 @@ test_mecanum_drive_controller:
     write_op_modes: ["motor_controller"]
 
     wheel_separation: 0.40
-    wheels_per_side: 1  # actually 2, but both are controlled by 1 signal
+    wheels_per_side: 1 # actually 2, but both are controlled by 1 signal
     wheel_radius: 0.02
 
     wheel_separation_multiplier: 1.0

@@ -19,6 +19,8 @@
  * library cannot have, but the consuming code must have inorder to link.
  */
 
+// Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers)
+
 #ifndef MECANUM_DRIVE_CONTROLLER__VISIBILITY_CONTROL_H_
 #define MECANUM_DRIVE_CONTROLLER__VISIBILITY_CONTROL_H_
 

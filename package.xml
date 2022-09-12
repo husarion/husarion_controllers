@@ -1,12 +1,17 @@
+<!-- Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers) -->
 <?xml version="1.0"?>
 <package format="3">
   <name>mecanum_drive_controller</name>
-  <version>2.12.0</version>
-  <description>Controller for a mecanum drive mobile base.</description>
-  <maintainer email="bence.magyar.robotics@gmail.com">Bence Magyar</maintainer>
-  <maintainer email="jordan.palacios@pal-robotics.com">Jordan Palacios</maintainer>
+  <version>1.0.0</version>
 
+  <description>Controller for a mecanum drive mobile base.</description>
   <license>Apache License 2.0</license>
+
+  <author email="maciej.stepien@husarion.com">Maciej Stępień</author>
+  <author email="bence.magyar.robotics@gmail.com">Bence Magyar</author>
+  <author email="jordan.palacios@pal-robotics.com">Jordan Palacios</author>
+  
+  <maintainer email="contact@husarion.com">Husarion</maintainer>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
