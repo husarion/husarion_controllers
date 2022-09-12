@@ -522,8 +522,8 @@ controller_interface::CallbackReturn MecanumDriveController::on_activate(const r
     return controller_interface::CallbackReturn::ERROR;
   }
 
-  if (registered_front_left_wheel_handle_ || registered_front_right_wheel_handle_ ||
-      registered_rear_left_wheel_handle_ || registered_rear_right_wheel_handle_)
+  if (!(registered_front_left_wheel_handle_ && registered_front_right_wheel_handle_ &&
+        registered_rear_left_wheel_handle_ && registered_rear_right_wheel_handle_))
   {
     RCLCPP_ERROR(get_node()->get_logger(), "One of wheel interfaces is non existent");
     return controller_interface::CallbackReturn::ERROR;
