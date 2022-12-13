@@ -143,10 +143,10 @@ InterfaceConfiguration MecanumDriveController::command_interface_configuration()
 InterfaceConfiguration MecanumDriveController::state_interface_configuration() const
 {
   std::vector<std::string> conf_names;
-  conf_names.push_back(front_left_wheel_name_ + "/" + HW_IF_VELOCITY);
-  conf_names.push_back(front_right_wheel_name_ + "/" + HW_IF_VELOCITY);
-  conf_names.push_back(rear_left_wheel_name_ + "/" + HW_IF_VELOCITY);
-  conf_names.push_back(rear_right_wheel_name_ + "/" + HW_IF_VELOCITY);
+  conf_names.push_back(front_left_wheel_name_ + "/" + feedback_type());
+  conf_names.push_back(front_right_wheel_name_ + "/" + feedback_type());
+  conf_names.push_back(rear_left_wheel_name_ + "/" + feedback_type());
+  conf_names.push_back(rear_right_wheel_name_ + "/" + feedback_type());
   return { interface_configuration_type::INDIVIDUAL, conf_names };
 }
 
