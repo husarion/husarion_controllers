@@ -221,8 +221,10 @@ controller_interface::return_type MecanumDriveController::update(const rclcpp::T
     }
     else
     {
-      odometry_.updateFromVelocity(front_left_feedback * period.seconds(), front_right_feedback * period.seconds(),
-                                   rear_left_feedback * period.seconds(), rear_right_feedback * period.seconds(), time);
+      odometry_.updateFromVelocity(front_left_feedback * wheel_radius * period.seconds(),
+                                   front_right_feedback * wheel_radius * period.seconds(),
+                                   rear_left_feedback * wheel_radius * period.seconds(),
+                                   rear_right_feedback * wheel_radius * period.seconds(), time);
     }
   }
 
