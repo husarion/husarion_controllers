@@ -18,6 +18,7 @@
  */
 
 // Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers)
+// Based on: https://ecam-eurobot.github.io/Tutorials/mechanical/mecanum.html
 // Author: Maciej Stępień
 
 #include "mecanum_drive_controller/odometry.hpp"
@@ -95,7 +96,7 @@ bool Odometry::updateFromVelocity(double front_left_vel, double front_right_vel,
   const double linear_x = (front_left_vel + front_right_vel + rear_left_vel + rear_right_vel) / 4.;
   const double linear_y = (-front_left_vel + front_right_vel + rear_left_vel - rear_right_vel) / 4.;
   const double angular = (-front_left_vel + front_right_vel - rear_left_vel + rear_right_vel) /
-                         (4. * (wheel_separation_x_ + wheel_separation_y_));
+                         (4. * (wheel_separation_x_ + wheel_separation_y_) / 2.);
 
   // Integrate odometry:
   integrateExact(linear_x, linear_y, angular);

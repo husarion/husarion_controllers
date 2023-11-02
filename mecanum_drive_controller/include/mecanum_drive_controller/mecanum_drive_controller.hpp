@@ -18,6 +18,7 @@
  */
 
 // Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers)
+// Based on: https://ecam-eurobot.github.io/Tutorials/mechanical/mecanum.html
 // Author: Maciej Stępień
 
 #ifndef MECANUM_DRIVE_CONTROLLER__MECANUM_DRIVE_CONTROLLER_HPP_
