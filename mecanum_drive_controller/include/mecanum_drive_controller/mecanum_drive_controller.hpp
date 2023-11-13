@@ -123,6 +123,8 @@ protected:
     bool open_loop = false;
     bool position_feedback = true;
     bool enable_odom_tf = true;
+    bool tf_frame_prefix_enable = false;
+    std::string tf_frame_prefix = "";
     std::string base_frame_id = "base_link";
     std::string odom_frame_id = "odom";
     std::array<double, 6> pose_covariance_diagonal;
