@@ -344,7 +344,7 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
 
   front_left_wheel_name_ = get_node()->get_parameter("front_left_wheel_name").as_string();
   front_right_wheel_name_ = get_node()->get_parameter("front_right_wheel_name").as_string();
-  rear_left_wheel_name_ =  get_node()->get_parameter("rear_left_wheel_name").as_string();
+  rear_left_wheel_name_ = get_node()->get_parameter("rear_left_wheel_name").as_string();
   rear_right_wheel_name_ = get_node()->get_parameter("rear_right_wheel_name").as_string();
 
   if (front_left_wheel_name_.empty() || front_right_wheel_name_.empty() || rear_left_wheel_name_.empty() ||
@@ -636,7 +636,7 @@ void MecanumDriveController::halt()
 }
 
 controller_interface::CallbackReturn
-MecanumDriveController:: configure_wheel(const std::string& wheel_name, std::unique_ptr<WheelHandle>& registered_handle)
+MecanumDriveController::configure_wheel(const std::string& wheel_name, std::unique_ptr<WheelHandle>& registered_handle)
 {
   auto logger = get_node()->get_logger();
 
