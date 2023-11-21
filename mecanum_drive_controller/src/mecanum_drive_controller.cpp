@@ -338,7 +338,7 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
     }
     else
     {
-      tf_prefix = tf_prefix + "_";
+      tf_prefix = tf_prefix + "/";
     }
   }
 
