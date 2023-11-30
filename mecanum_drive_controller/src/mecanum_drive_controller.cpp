@@ -84,6 +84,8 @@ controller_interface::CallbackReturn MecanumDriveController::on_init()
     auto_declare<bool>("open_loop", odom_params_.open_loop);
     auto_declare<bool>("position_feedback", odom_params_.position_feedback);
     auto_declare<bool>("enable_odom_tf", odom_params_.enable_odom_tf);
+    auto_declare<bool>("tf_frame_prefix_enable", odom_params_.tf_frame_prefix_enable);
+    auto_declare<std::string>("tf_frame_prefix", odom_params_.tf_frame_prefix);
 
     auto_declare<double>("cmd_vel_timeout", cmd_vel_timeout_.count() / 1000.0);
     publish_limited_velocity_ = auto_declare<bool>("publish_limited_velocity", publish_limited_velocity_);
@@ -315,6 +317,31 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
   auto logger = get_node()->get_logger();
 
   // update parameters
+  odom_params_.tf_frame_prefix_enable = get_node()->get_parameter("tf_frame_prefix_enable").as_bool();
+  odom_params_.tf_frame_prefix = get_node()->get_parameter("tf_frame_prefix").as_string();
+  odom_params_.odom_frame_id = get_node()->get_parameter("odom_frame_id").as_string();
+  odom_params_.base_frame_id = get_node()->get_parameter("base_frame_id").as_string();
+  std::string tf_prefix;
+  if(odom_params_.tf_frame_prefix_enable){
+    if (odom_params_.tf_frame_prefix != "")
+    {
+      tf_prefix = odom_params_.tf_frame_prefix;
+    }
+    else
+    {
+      tf_prefix = std::string(get_node()->get_namespace());
+    }
+
+    if(tf_prefix == "/")
+    {
+      tf_prefix = "";
+    }
+    else
+    {
+      tf_prefix = tf_prefix + "/";
+    }
+  }
+
   front_left_wheel_name_ = get_node()->get_parameter("front_left_wheel_name").as_string();
   front_right_wheel_name_ = get_node()->get_parameter("front_right_wheel_name").as_string();
   rear_left_wheel_name_ = get_node()->get_parameter("rear_left_wheel_name").as_string();
@@ -326,6 +353,13 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
     RCLCPP_ERROR(logger, "Wheel name parameter is empty!");
     return controller_interface::CallbackReturn::ERROR;
   }
+
+  front_left_wheel_name_ = tf_prefix + front_left_wheel_name_;
+  front_right_wheel_name_ = tf_prefix + front_right_wheel_name_;
+  rear_left_wheel_name_ =  tf_prefix + rear_left_wheel_name_;
+  rear_right_wheel_name_ = tf_prefix + rear_right_wheel_name_;
+  odom_params_.odom_frame_id = tf_prefix + odom_params_.odom_frame_id;
+  odom_params_.base_frame_id = tf_prefix + odom_params_.base_frame_id;
 
   wheel_params_.separation_x = get_node()->get_parameter("wheel_separation_x").as_double();
   wheel_params_.separation_y = get_node()->get_parameter("wheel_separation_y").as_double();
@@ -342,9 +376,6 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
 
   odometry_.setWheelParams(wheel_separation_x, wheel_separation_y, wheel_radius);
   odometry_.setVelocityRollingWindowSize(get_node()->get_parameter("velocity_rolling_window_size").as_int());
-
-  odom_params_.odom_frame_id = get_node()->get_parameter("odom_frame_id").as_string();
-  odom_params_.base_frame_id = get_node()->get_parameter("base_frame_id").as_string();
 
   auto pose_diagonal = get_node()->get_parameter("pose_covariance_diagonal").as_double_array();
   std::copy(pose_diagonal.begin(), pose_diagonal.end(), odom_params_.pose_covariance_diagonal.begin());
