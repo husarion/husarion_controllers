@@ -177,10 +177,24 @@ controller_interface::return_type MecanumDriveController::update(const rclcpp::T
   tf2::Quaternion orientation;
   orientation.setRPY(0.0, 0.0, odometry_.getHeading());
 
-  if (previous_publish_timestamp_ + publish_period_ < time)
+  bool should_publish = false;
+  try
   {
-    previous_publish_timestamp_ += publish_period_;
+    if (previous_publish_timestamp_ + publish_period_ < time)
+    {
+      previous_publish_timestamp_ += publish_period_;
+      should_publish = true;
+    }
+  }
+  catch (const std::runtime_error &)
+  {
+    // Handle exceptions when the time source changes and initialize publish timestamp
+    previous_publish_timestamp_ = time;
+    should_publish = true;
+  }
 
+  if (should_publish)
+  {
     if (realtime_odometry_publisher_->trylock())
     {
       auto& odometry_message = realtime_odometry_publisher_->msg_;
@@ -451,7 +465,6 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
   // limit the publication on the topics /odom and /tf
   publish_rate_ = params_.publish_rate;
   publish_period_ = rclcpp::Duration::from_seconds(1.0 / publish_rate_);
-  previous_publish_timestamp_ = get_node()->get_clock()->now();
 
   // initialize odom values zeros
   odometry_message.twist = geometry_msgs::msg::TwistWithCovariance(rosidl_runtime_cpp::MessageInitialization::ALL);
