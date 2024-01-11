@@ -57,74 +57,18 @@ MecanumDriveController::MecanumDriveController() : controller_interface::Control
 
 const char* MecanumDriveController::feedback_type() const
 {
-  return odom_params_.position_feedback ? HW_IF_POSITION : HW_IF_VELOCITY;
+  return params_.position_feedback ? HW_IF_POSITION : HW_IF_VELOCITY;
 }
 
 controller_interface::CallbackReturn MecanumDriveController::on_init()
 {
   try
   {
-    // with the lifecycle node being initialized, we can declare parameters
-    auto_declare<std::string>("front_left_wheel_name", "");
-    auto_declare<std::string>("front_right_wheel_name", "");
-    auto_declare<std::string>("rear_left_wheel_name", "");
-    auto_declare<std::string>("rear_right_wheel_name", "");
-
-    auto_declare<double>("wheel_separation_x", wheel_params_.separation_x);
-    auto_declare<double>("wheel_separation_y", wheel_params_.separation_y);
-    auto_declare<double>("wheel_radius", wheel_params_.radius);
-    auto_declare<double>("wheel_separation_x_multiplier", wheel_params_.separation_x_multiplier);
-    auto_declare<double>("wheel_separation_y_multiplier", wheel_params_.separation_y_multiplier);
-    auto_declare<double>("wheel_radius_multiplier", wheel_params_.radius_multiplier);
-
-    auto_declare<std::string>("odom_frame_id", odom_params_.odom_frame_id);
-    auto_declare<std::string>("base_frame_id", odom_params_.base_frame_id);
-    auto_declare<std::vector<double>>("pose_covariance_diagonal", std::vector<double>());
-    auto_declare<std::vector<double>>("twist_covariance_diagonal", std::vector<double>());
-    auto_declare<bool>("open_loop", odom_params_.open_loop);
-    auto_declare<bool>("position_feedback", odom_params_.position_feedback);
-    auto_declare<bool>("enable_odom_tf", odom_params_.enable_odom_tf);
-    auto_declare<bool>("tf_frame_prefix_enable", odom_params_.tf_frame_prefix_enable);
-    auto_declare<std::string>("tf_frame_prefix", odom_params_.tf_frame_prefix);
-
-    auto_declare<double>("cmd_vel_timeout", cmd_vel_timeout_.count() / 1000.0);
-    publish_limited_velocity_ = auto_declare<bool>("publish_limited_velocity", publish_limited_velocity_);
-    auto_declare<int>("velocity_rolling_window_size", 10);
-    use_stamped_vel_ = auto_declare<bool>("use_stamped_vel", use_stamped_vel_);
-
-    auto_declare<bool>("linear.x.has_velocity_limits", false);
-    auto_declare<bool>("linear.x.has_acceleration_limits", false);
-    auto_declare<bool>("linear.x.has_jerk_limits", false);
-    auto_declare<double>("linear.x.max_velocity", NAN);
-    auto_declare<double>("linear.x.min_velocity", NAN);
-    auto_declare<double>("linear.x.max_acceleration", NAN);
-    auto_declare<double>("linear.x.min_acceleration", NAN);
-    auto_declare<double>("linear.x.max_jerk", NAN);
-    auto_declare<double>("linear.x.min_jerk", NAN);
-
-    auto_declare<bool>("linear.y.has_velocity_limits", false);
-    auto_declare<bool>("linear.y.has_acceleration_limits", false);
-    auto_declare<bool>("linear.y.has_jerk_limits", false);
-    auto_declare<double>("linear.y.max_velocity", NAN);
-    auto_declare<double>("linear.y.min_velocity", NAN);
-    auto_declare<double>("linear.y.max_acceleration", NAN);
-    auto_declare<double>("linear.y.min_acceleration", NAN);
-    auto_declare<double>("linear.y.max_jerk", NAN);
-    auto_declare<double>("linear.y.min_jerk", NAN);
-
-    auto_declare<bool>("angular.z.has_velocity_limits", false);
-    auto_declare<bool>("angular.z.has_acceleration_limits", false);
-    auto_declare<bool>("angular.z.has_jerk_limits", false);
-    auto_declare<double>("angular.z.max_velocity", NAN);
-    auto_declare<double>("angular.z.min_velocity", NAN);
-    auto_declare<double>("angular.z.max_acceleration", NAN);
-    auto_declare<double>("angular.z.min_acceleration", NAN);
-    auto_declare<double>("angular.z.max_jerk", NAN);
-    auto_declare<double>("angular.z.min_jerk", NAN);
-
-    publish_rate_ = auto_declare<double>("publish_rate", publish_rate_);
+    // Create the parameter listener and get the parameters
+    param_listener_ = std::make_shared<ParamListener>(get_node());
+    params_ = param_listener_->get_params();
   }
-  catch (const std::exception& e)
+  catch (const std::exception & e)
   {
     fprintf(stderr, "Exception thrown during init stage with message: %s \n", e.what());
     return controller_interface::CallbackReturn::ERROR;
@@ -195,12 +139,11 @@ controller_interface::return_type MecanumDriveController::update(const rclcpp::T
   previous_update_timestamp_ = time;
 
   // Apply (possibly new) multipliers:
-  const auto wheels = wheel_params_;
-  const double wheel_separation_x = wheels.separation_x_multiplier * wheels.separation_x;
-  const double wheel_separation_y = wheels.separation_y_multiplier * wheels.separation_y;
-  const double wheel_radius = wheels.radius_multiplier * wheels.radius;
+  const double wheel_separation_x = params_.wheel_separation_x_multiplier * params_.wheel_separation_x;
+  const double wheel_separation_y = params_.wheel_separation_y_multiplier * params_.wheel_separation_y;
+  const double wheel_radius = params_.wheel_radius_multiplier * params_.wheel_radius;
 
-  if (odom_params_.open_loop)
+  if (params_.open_loop)
   {
     odometry_.updateOpenLoop(linear_command_x, linear_command_y, angular_command, time);
   }
@@ -218,7 +161,7 @@ controller_interface::return_type MecanumDriveController::update(const rclcpp::T
       return controller_interface::return_type::ERROR;
     }
 
-    if (odom_params_.position_feedback)
+    if (params_.position_feedback)
     {
       odometry_.update(front_left_feedback, front_right_feedback, rear_left_feedback, rear_right_feedback, time);
     }
@@ -234,10 +177,24 @@ controller_interface::return_type MecanumDriveController::update(const rclcpp::T
   tf2::Quaternion orientation;
   orientation.setRPY(0.0, 0.0, odometry_.getHeading());
 
-  if (previous_publish_timestamp_ + publish_period_ < time)
+  bool should_publish = false;
+  try
   {
-    previous_publish_timestamp_ += publish_period_;
+    if (previous_publish_timestamp_ + publish_period_ < time)
+    {
+      previous_publish_timestamp_ += publish_period_;
+      should_publish = true;
+    }
+  }
+  catch (const std::runtime_error &)
+  {
+    // Handle exceptions when the time source changes and initialize publish timestamp
+    previous_publish_timestamp_ = time;
+    should_publish = true;
+  }
 
+  if (should_publish)
+  {
     if (realtime_odometry_publisher_->trylock())
     {
       auto& odometry_message = realtime_odometry_publisher_->msg_;
@@ -254,7 +211,7 @@ controller_interface::return_type MecanumDriveController::update(const rclcpp::T
       realtime_odometry_publisher_->unlockAndPublish();
     }
 
-    if (odom_params_.enable_odom_tf && realtime_odometry_transform_publisher_->trylock())
+    if (params_.enable_odom_tf && realtime_odometry_transform_publisher_->trylock())
     {
       auto& transform = realtime_odometry_transform_publisher_->msg_.transforms.front();
       transform.header.stamp = time;
@@ -316,16 +273,18 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
 {
   auto logger = get_node()->get_logger();
 
-  // update parameters
-  odom_params_.tf_frame_prefix_enable = get_node()->get_parameter("tf_frame_prefix_enable").as_bool();
-  odom_params_.tf_frame_prefix = get_node()->get_parameter("tf_frame_prefix").as_string();
-  odom_params_.odom_frame_id = get_node()->get_parameter("odom_frame_id").as_string();
-  odom_params_.base_frame_id = get_node()->get_parameter("base_frame_id").as_string();
+  // update parameters if they have changed
+  if (param_listener_->is_old(params_))
+  {
+    params_ = param_listener_->get_params();
+    RCLCPP_INFO(logger, "Parameters were updated");
+  }
+
   std::string tf_prefix;
-  if(odom_params_.tf_frame_prefix_enable){
-    if (odom_params_.tf_frame_prefix != "")
+  if(params_.tf_frame_prefix_enable){
+    if (params_.tf_frame_prefix != "")
     {
-      tf_prefix = odom_params_.tf_frame_prefix;
+      tf_prefix = params_.tf_frame_prefix;
     }
     else
     {
@@ -342,10 +301,10 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
     }
   }
 
-  front_left_wheel_name_ = get_node()->get_parameter("front_left_wheel_name").as_string();
-  front_right_wheel_name_ = get_node()->get_parameter("front_right_wheel_name").as_string();
-  rear_left_wheel_name_ = get_node()->get_parameter("rear_left_wheel_name").as_string();
-  rear_right_wheel_name_ = get_node()->get_parameter("rear_right_wheel_name").as_string();
+  front_left_wheel_name_ = params_.front_left_wheel_name;
+  front_right_wheel_name_ = params_.front_right_wheel_name;
+  rear_left_wheel_name_ = params_.rear_left_wheel_name;
+  rear_right_wheel_name_ = params_.rear_right_wheel_name;
 
   if (front_left_wheel_name_.empty() || front_right_wheel_name_.empty() || rear_left_wheel_name_.empty() ||
       rear_right_wheel_name_.empty())
@@ -358,51 +317,42 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
   front_right_wheel_name_ = tf_prefix + front_right_wheel_name_;
   rear_left_wheel_name_ =  tf_prefix + rear_left_wheel_name_;
   rear_right_wheel_name_ = tf_prefix + rear_right_wheel_name_;
-  odom_params_.odom_frame_id = tf_prefix + odom_params_.odom_frame_id;
-  odom_params_.base_frame_id = tf_prefix + odom_params_.base_frame_id;
+  params_.odom_frame_id = tf_prefix + params_.odom_frame_id;
+  params_.base_frame_id = tf_prefix + params_.base_frame_id;
 
-  wheel_params_.separation_x = get_node()->get_parameter("wheel_separation_x").as_double();
-  wheel_params_.separation_y = get_node()->get_parameter("wheel_separation_y").as_double();
-  wheel_params_.radius = get_node()->get_parameter("wheel_radius").as_double();
-  wheel_params_.separation_x_multiplier = get_node()->get_parameter("wheel_separation_x_multiplier").as_double();
-  wheel_params_.separation_y_multiplier = get_node()->get_parameter("wheel_separation_y_multiplier").as_double();
-  wheel_params_.radius_multiplier = get_node()->get_parameter("wheel_radius_multiplier").as_double();
-
-  const auto wheels = wheel_params_;
-
-  const double wheel_separation_x = wheels.separation_x_multiplier * wheels.separation_x;
-  const double wheel_separation_y = wheels.separation_y_multiplier * wheels.separation_y;
-  const double wheel_radius = wheels.radius_multiplier * wheels.radius;
+  const double wheel_separation_x = params_.wheel_separation_y_multiplier * params_.wheel_separation_x;
+  const double wheel_separation_y = params_.wheel_separation_x_multiplier * params_.wheel_separation_y;
+  const double wheel_radius = params_.wheel_radius_multiplier * params_.wheel_radius;
 
   odometry_.setWheelParams(wheel_separation_x, wheel_separation_y, wheel_radius);
-  odometry_.setVelocityRollingWindowSize(get_node()->get_parameter("velocity_rolling_window_size").as_int());
+  odometry_.setVelocityRollingWindowSize(params_.velocity_rolling_window_size);
 
-  auto pose_diagonal = get_node()->get_parameter("pose_covariance_diagonal").as_double_array();
-  std::copy(pose_diagonal.begin(), pose_diagonal.end(), odom_params_.pose_covariance_diagonal.begin());
+  auto pose_diagonal = params_.pose_covariance_diagonal;
+  std::copy(pose_diagonal.begin(), pose_diagonal.end(), params_.pose_covariance_diagonal.begin());
 
-  auto twist_diagonal = get_node()->get_parameter("twist_covariance_diagonal").as_double_array();
-  std::copy(twist_diagonal.begin(), twist_diagonal.end(), odom_params_.twist_covariance_diagonal.begin());
+  auto twist_diagonal = params_.twist_covariance_diagonal;
+  std::copy(twist_diagonal.begin(), twist_diagonal.end(), params_.twist_covariance_diagonal.begin());
 
-  odom_params_.open_loop = get_node()->get_parameter("open_loop").as_bool();
-  odom_params_.position_feedback = get_node()->get_parameter("position_feedback").as_bool();
-  odom_params_.enable_odom_tf = get_node()->get_parameter("enable_odom_tf").as_bool();
+  params_.open_loop = params_.open_loop;
+  params_.position_feedback = params_.position_feedback;
+  params_.enable_odom_tf = params_.enable_odom_tf;
 
   cmd_vel_timeout_ =
-      std::chrono::milliseconds{ static_cast<int>(get_node()->get_parameter("cmd_vel_timeout").as_double() * 1000.0) };
-  publish_limited_velocity_ = get_node()->get_parameter("publish_limited_velocity").as_bool();
-  use_stamped_vel_ = get_node()->get_parameter("use_stamped_vel").as_bool();
+      std::chrono::milliseconds{ static_cast<int>(params_.cmd_vel_timeout * 1000.0) };
+  publish_limited_velocity_ = params_.publish_limited_velocity;
+  use_stamped_vel_ = params_.use_stamped_vel;
 
   try
   {
-    limiter_linear_x_ = SpeedLimiter(get_node()->get_parameter("linear.x.has_velocity_limits").as_bool(),
-                                     get_node()->get_parameter("linear.x.has_acceleration_limits").as_bool(),
-                                     get_node()->get_parameter("linear.x.has_jerk_limits").as_bool(),
-                                     get_node()->get_parameter("linear.x.min_velocity").as_double(),
-                                     get_node()->get_parameter("linear.x.max_velocity").as_double(),
-                                     get_node()->get_parameter("linear.x.min_acceleration").as_double(),
-                                     get_node()->get_parameter("linear.x.max_acceleration").as_double(),
-                                     get_node()->get_parameter("linear.x.min_jerk").as_double(),
-                                     get_node()->get_parameter("linear.x.max_jerk").as_double());
+    limiter_linear_x_ = SpeedLimiter(params_.linear.x.has_velocity_limits,
+                                     params_.linear.x.has_acceleration_limits,
+                                     params_.linear.x.has_jerk_limits,
+                                     params_.linear.x.min_velocity,
+                                     params_.linear.x.max_velocity,
+                                     params_.linear.x.min_acceleration,
+                                     params_.linear.x.max_acceleration,
+                                     params_.linear.x.min_jerk,
+                                     params_.linear.x.max_jerk);
   }
   catch (const std::runtime_error& e)
   {
@@ -411,15 +361,15 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
 
   try
   {
-    limiter_linear_y_ = SpeedLimiter(get_node()->get_parameter("linear.y.has_velocity_limits").as_bool(),
-                                     get_node()->get_parameter("linear.y.has_acceleration_limits").as_bool(),
-                                     get_node()->get_parameter("linear.y.has_jerk_limits").as_bool(),
-                                     get_node()->get_parameter("linear.y.min_velocity").as_double(),
-                                     get_node()->get_parameter("linear.y.max_velocity").as_double(),
-                                     get_node()->get_parameter("linear.y.min_acceleration").as_double(),
-                                     get_node()->get_parameter("linear.y.max_acceleration").as_double(),
-                                     get_node()->get_parameter("linear.y.min_jerk").as_double(),
-                                     get_node()->get_parameter("linear.y.max_jerk").as_double());
+    limiter_linear_y_ = SpeedLimiter(params_.linear.y.has_velocity_limits,
+                                     params_.linear.y.has_acceleration_limits,
+                                     params_.linear.y.has_jerk_limits,
+                                     params_.linear.y.min_velocity,
+                                     params_.linear.y.max_velocity,
+                                     params_.linear.y.min_acceleration,
+                                     params_.linear.y.max_acceleration,
+                                     params_.linear.y.min_jerk,
+                                     params_.linear.y.max_jerk);
   }
   catch (const std::runtime_error& e)
   {
@@ -428,15 +378,15 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
 
   try
   {
-    limiter_angular_ = SpeedLimiter(get_node()->get_parameter("angular.z.has_velocity_limits").as_bool(),
-                                    get_node()->get_parameter("angular.z.has_acceleration_limits").as_bool(),
-                                    get_node()->get_parameter("angular.z.has_jerk_limits").as_bool(),
-                                    get_node()->get_parameter("angular.z.min_velocity").as_double(),
-                                    get_node()->get_parameter("angular.z.max_velocity").as_double(),
-                                    get_node()->get_parameter("angular.z.min_acceleration").as_double(),
-                                    get_node()->get_parameter("angular.z.max_acceleration").as_double(),
-                                    get_node()->get_parameter("angular.z.min_jerk").as_double(),
-                                    get_node()->get_parameter("angular.z.max_jerk").as_double());
+    limiter_angular_ = SpeedLimiter(params_.angular.z.has_velocity_limits,
+                                    params_.angular.z.has_acceleration_limits,
+                                    params_.angular.z.has_jerk_limits,
+                                    params_.angular.z.min_velocity,
+                                    params_.angular.z.max_velocity,
+                                    params_.angular.z.min_acceleration,
+                                    params_.angular.z.max_acceleration,
+                                    params_.angular.z.min_jerk,
+                                    params_.angular.z.max_jerk);
   }
   catch (const std::runtime_error& e)
   {
@@ -509,13 +459,12 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
       std::make_shared<realtime_tools::RealtimePublisher<nav_msgs::msg::Odometry>>(odometry_publisher_);
 
   auto& odometry_message = realtime_odometry_publisher_->msg_;
-  odometry_message.header.frame_id = odom_params_.odom_frame_id;
-  odometry_message.child_frame_id = odom_params_.base_frame_id;
+  odometry_message.header.frame_id = params_.odom_frame_id;
+  odometry_message.child_frame_id = params_.base_frame_id;
 
   // limit the publication on the topics /odom and /tf
-  publish_rate_ = get_node()->get_parameter("publish_rate").as_double();
+  publish_rate_ = params_.publish_rate;
   publish_period_ = rclcpp::Duration::from_seconds(1.0 / publish_rate_);
-  previous_publish_timestamp_ = get_node()->get_clock()->now();
 
   // initialize odom values zeros
   odometry_message.twist = geometry_msgs::msg::TwistWithCovariance(rosidl_runtime_cpp::MessageInitialization::ALL);
@@ -525,8 +474,8 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
   {
     // 0, 7, 14, 21, 28, 35
     const size_t diagonal_index = NUM_DIMENSIONS * index + index;
-    odometry_message.pose.covariance[diagonal_index] = odom_params_.pose_covariance_diagonal[index];
-    odometry_message.twist.covariance[diagonal_index] = odom_params_.twist_covariance_diagonal[index];
+    odometry_message.pose.covariance[diagonal_index] = params_.pose_covariance_diagonal[index];
+    odometry_message.twist.covariance[diagonal_index] = params_.twist_covariance_diagonal[index];
   }
 
   // initialize transform publisher and message
@@ -538,8 +487,8 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
   // keeping track of odom and base_link transforms only
   auto& odometry_transform_message = realtime_odometry_transform_publisher_->msg_;
   odometry_transform_message.transforms.resize(1);
-  odometry_transform_message.transforms.front().header.frame_id = odom_params_.odom_frame_id;
-  odometry_transform_message.transforms.front().child_frame_id = odom_params_.base_frame_id;
+  odometry_transform_message.transforms.front().header.frame_id = params_.odom_frame_id;
+  odometry_transform_message.transforms.front().child_frame_id = params_.base_frame_id;
 
   previous_update_timestamp_ = get_node()->get_clock()->now();
   return controller_interface::CallbackReturn::SUCCESS;

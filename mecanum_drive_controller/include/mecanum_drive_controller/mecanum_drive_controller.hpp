@@ -47,6 +47,8 @@
 #include "realtime_tools/realtime_publisher.h"
 #include "tf2_msgs/msg/tf_message.hpp"
 
+#include "mecanum_drive_controller_parameters.hpp"
+
 namespace mecanum_drive_controller
 {
 class MecanumDriveController : public controller_interface::ControllerInterface
@@ -108,28 +110,9 @@ protected:
   std::unique_ptr<WheelHandle> registered_rear_left_wheel_handle_;
   std::unique_ptr<WheelHandle> registered_rear_right_wheel_handle_;
 
-  struct WheelParams
-  {
-    double separation_x = 0.0;  // w.r.t. the midpoint of the wheel width
-    double separation_y = 0.0;  // w.r.t. the midpoint of the wheel width
-    double radius = 0.0;        // Assumed to be the same for both wheels
-    double separation_x_multiplier = 1.0;
-    double separation_y_multiplier = 1.0;
-    double radius_multiplier = 1.0;
-  } wheel_params_;
-
-  struct OdometryParams
-  {
-    bool open_loop = false;
-    bool position_feedback = true;
-    bool enable_odom_tf = true;
-    bool tf_frame_prefix_enable = false;
-    std::string tf_frame_prefix = "";
-    std::string base_frame_id = "base_link";
-    std::string odom_frame_id = "odom";
-    std::array<double, 6> pose_covariance_diagonal;
-    std::array<double, 6> twist_covariance_diagonal;
-  } odom_params_;
+  // Parameters from ROS for diff_drive_controller
+  std::shared_ptr<ParamListener> param_listener_;
+  Params params_;
 
   Odometry odometry_;
 
