@@ -313,10 +313,10 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
     return controller_interface::CallbackReturn::ERROR;
   }
 
-  front_left_wheel_name_ = tf_prefix + front_left_wheel_name_;
-  front_right_wheel_name_ = tf_prefix + front_right_wheel_name_;
-  rear_left_wheel_name_ =  tf_prefix + rear_left_wheel_name_;
-  rear_right_wheel_name_ = tf_prefix + rear_right_wheel_name_;
+  front_left_wheel_name_ = front_left_wheel_name_;
+  front_right_wheel_name_ = front_right_wheel_name_;
+  rear_left_wheel_name_ = rear_left_wheel_name_;
+  rear_right_wheel_name_ = rear_right_wheel_name_;
   params_.odom_frame_id = tf_prefix + params_.odom_frame_id;
   params_.base_frame_id = tf_prefix + params_.base_frame_id;
 
