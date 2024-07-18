@@ -280,25 +280,23 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
     RCLCPP_INFO(logger, "Parameters were updated");
   }
 
-  std::string tf_prefix;
-  if(params_.tf_frame_prefix_enable){
-    if (params_.tf_frame_prefix != "")
+  // Append the tf prefix if there is one
+  std::string tf_prefix = "";
+  if (!params_.tf_frame_prefix.empty())
+  {
+    tf_prefix = params_.tf_frame_prefix;
+  }
+  else
+  {
+    tf_prefix = std::string(get_node()->get_namespace());
+    if (tf_prefix != "/")
     {
-      tf_prefix = params_.tf_frame_prefix;
+      tf_prefix += '/';
     }
-    else
-    {
-      tf_prefix = std::string(get_node()->get_namespace());
-    }
-
-    if(tf_prefix == "/")
-    {
-      tf_prefix = "";
-    }
-    else
-    {
-      tf_prefix = tf_prefix + "/";
-    }
+  }
+  if (tf_prefix.front() == '/')
+  {
+    tf_prefix.erase(0, 1);
   }
 
   front_left_wheel_name_ = params_.front_left_wheel_name;
