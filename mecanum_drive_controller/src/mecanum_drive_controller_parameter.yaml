@@ -105,11 +105,6 @@ mecanum_drive_controller:
     default_value: 10,
     description: "Size of the rolling window for calculation of mean velocity use in odometry.",
   }
-  use_stamped_vel: {
-    type: bool,
-    default_value: true,
-    description: "Use stamp from input velocity message to calculate how old the command actually is.",
-  }
   publish_rate: {
     type: double,
     default_value: 50.0, # Hz

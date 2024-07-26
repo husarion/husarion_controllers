@@ -340,7 +340,6 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
   cmd_vel_timeout_ =
       std::chrono::milliseconds{ static_cast<int>(params_.cmd_vel_timeout * 1000.0) };
   publish_limited_velocity_ = params_.publish_limited_velocity;
-  use_stamped_vel_ = params_.use_stamped_vel;
 
   try
   {
@@ -413,10 +412,7 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
   previous_commands_.emplace(empty_twist);
   previous_commands_.emplace(empty_twist);
 
-  // initialize command subscriber
-  if (use_stamped_vel_)
-  {
-    velocity_command_subscriber_ = get_node()->create_subscription<Twist>(
+  velocity_command_subscriber_ = get_node()->create_subscription<Twist>(
         DEFAULT_COMMAND_TOPIC, rclcpp::SystemDefaultsQoS(), [this](const std::shared_ptr<Twist> msg) -> void {
           if (!subscriber_is_active_)
           {
@@ -432,25 +428,6 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
           }
           received_velocity_msg_ptr_.set(std::move(msg));
         });
-  }
-  else
-  {
-    velocity_command_unstamped_subscriber_ = get_node()->create_subscription<geometry_msgs::msg::Twist>(
-        DEFAULT_COMMAND_UNSTAMPED_TOPIC, rclcpp::SystemDefaultsQoS(),
-        [this](const std::shared_ptr<geometry_msgs::msg::Twist> msg) -> void {
-          if (!subscriber_is_active_)
-          {
-            RCLCPP_WARN(get_node()->get_logger(), "Can't accept new commands. subscriber is inactive");
-            return;
-          }
-
-          // Write fake header in the stored stamped command
-          std::shared_ptr<Twist> twist_stamped;
-          received_velocity_msg_ptr_.get(twist_stamped);
-          twist_stamped->twist = *msg;
-          twist_stamped->header.stamp = get_node()->get_clock()->now();
-        });
-  }
 
   // initialize odometry publisher and messasge
   odometry_publisher_ =
@@ -564,7 +541,6 @@ bool MecanumDriveController::reset()
 
   subscriber_is_active_ = false;
   velocity_command_subscriber_.reset();
-  velocity_command_unstamped_subscriber_.reset();
 
   received_velocity_msg_ptr_.set(nullptr);
   is_halted = false;
