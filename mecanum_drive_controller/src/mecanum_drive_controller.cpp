@@ -291,13 +291,14 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
       tf_prefix = std::string(get_node()->get_namespace());
     }
 
-    if(tf_prefix == "/")
-    {
-      tf_prefix = "";
-    }
-    else
+    // Make sure prefix does not start with '/' and always ends with '/'
+    if (tf_prefix.back() != '/')
     {
       tf_prefix = tf_prefix + "/";
+    }
+    if (tf_prefix.front() == '/')
+    {
+      tf_prefix.erase(0, 1);
     }
   }
 
@@ -313,10 +314,10 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(const 
     return controller_interface::CallbackReturn::ERROR;
   }
 
-  front_left_wheel_name_ = tf_prefix + front_left_wheel_name_;
-  front_right_wheel_name_ = tf_prefix + front_right_wheel_name_;
-  rear_left_wheel_name_ =  tf_prefix + rear_left_wheel_name_;
-  rear_right_wheel_name_ = tf_prefix + rear_right_wheel_name_;
+  front_left_wheel_name_ = front_left_wheel_name_;
+  front_right_wheel_name_ = front_right_wheel_name_;
+  rear_left_wheel_name_ =  rear_left_wheel_name_;
+  rear_right_wheel_name_ = rear_right_wheel_name_;
   params_.odom_frame_id = tf_prefix + params_.odom_frame_id;
   params_.base_frame_id = tf_prefix + params_.base_frame_id;
 
