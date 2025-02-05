@@ -1,6 +1,6 @@
 # Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers)
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(mecanum_drive_controller)
 
 # Default to C++17
