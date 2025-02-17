@@ -30,7 +30,7 @@
 #include <cmath>
 
 #include "rclcpp/time.hpp"
-#include "rcppmath/rolling_mean_accumulator.hpp"
+#include "rcpputils/rolling_mean_accumulator.hpp"
 
 namespace mecanum_drive_controller
 {
@@ -76,7 +76,7 @@ public:
   void setVelocityRollingWindowSize(size_t velocity_rolling_window_size);
 
 private:
-  using RollingMeanAccumulator = rcppmath::RollingMeanAccumulator<double>;
+  using RollingMeanAccumulator = rcpputils::RollingMeanAccumulator<double>;
 
   void integrateRungeKutta2(double linear_x, double linear_y, double angular);
   void integrateExact(double linear_x, double linear_y, double angular);
