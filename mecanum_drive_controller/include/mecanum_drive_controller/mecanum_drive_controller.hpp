@@ -47,7 +47,7 @@
 #include "realtime_tools/realtime_publisher.hpp"
 #include "tf2_msgs/msg/tf_message.hpp"
 
-#include "mecanum_drive_controller_parameters.hpp"
+#include <mecanum_drive_controller/mecanum_drive_controller_parameters.hpp>
 
 namespace mecanum_drive_controller
 {
