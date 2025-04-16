@@ -1,0 +1,8 @@
+<library path="low_pass_filter">
+  <class name="low_pass_filter/LowPassFilter" type="low_pass_filter::LowPassFilter"
+    base_class_type="controller_interface::ChainableControllerInterface">
+    <description>
+      Low pass filter.
+    </description>
+  </class>
+</library>

@@ -41,7 +41,7 @@ VelocityInputController::command_interface_configuration() const
   command_interfaces_config.names.push_back(
     std::string("drive_controller/linear/") + hardware_interface::HW_IF_VELOCITY);
   command_interfaces_config.names.push_back(
-    std::string("pid_controller/imu/angular_velocity.z"));
+    std::string("pid_controller/low_pass_filter/imu/angular_velocity.z"));
 
   return command_interfaces_config;
 }
