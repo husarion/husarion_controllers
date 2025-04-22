@@ -42,10 +42,8 @@ controller_interface::InterfaceConfiguration LowPassFilter::state_interface_conf
 }
 
 controller_interface::return_type LowPassFilter::update_reference_from_subscribers(
-  const rclcpp::Time & time, const rclcpp::Duration &)
+  const rclcpp::Time &, const rclcpp::Duration &)
 {
-  // Here we could subscribe to /imu topic instead of using state interfaces (if they are not
-  // available)
   return controller_interface::return_type::OK;
 }
 
@@ -64,7 +62,8 @@ controller_interface::return_type LowPassFilter::update_and_write_commands(
 
   if (realtime_publisher_ && realtime_publisher_->trylock()) {
     realtime_publisher_->msg_.header.stamp = time;
-    realtime_publisher_->msg_.angular_velocity.z = state_interfaces_values_[0];
+    realtime_publisher_->msg_.states.interface_names = exported_state_interface_names_;
+    realtime_publisher_->msg_.states.values = state_interfaces_values_;
     realtime_publisher_->unlockAndPublish();
   }
 
@@ -88,9 +87,11 @@ controller_interface::CallbackReturn LowPassFilter::on_configure(const rclcpp_li
 {
   auto logger = get_node()->get_logger();
 
-  sensor_state_publisher_ = get_node()->create_publisher<sensor_msgs::msg::Imu>(
-    "~/imu/filtered", rclcpp::SystemDefaultsQoS());
-  realtime_publisher_ = std::make_unique<StatePublisher>(sensor_state_publisher_);
+  if (params_.publish_interface_values) {
+    interface_values_publisher_ = get_node()->create_publisher<DynamicInterfaceValuesMsg>(
+      "~/interface_values", rclcpp::SystemDefaultsQoS());
+    realtime_publisher_ = std::make_unique<StatePublisher>(interface_values_publisher_);
+  }
 
   low_pass_filter_ = std::make_shared<control_toolbox::LowPassFilter<double>>(
     params_.sampling_frequency, params_.damping_frequency, params_.damping_intensity);

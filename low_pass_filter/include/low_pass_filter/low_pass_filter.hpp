@@ -21,12 +21,14 @@
 #include <rclcpp_lifecycle/state.hpp>
 #include <realtime_tools/realtime_publisher.hpp>
 
-#include <sensor_msgs/msg/imu.hpp>
+#include <control_msgs/msg/dynamic_interface_values.hpp>
 
 #include "low_pass_filter/low_pass_filter_parameters.hpp"
 
 namespace low_pass_filter
 {
+
+using DynamicInterfaceValuesMsg = control_msgs::msg::DynamicInterfaceValues;
 
 class LowPassFilter : public controller_interface::ChainableControllerInterface
 {
@@ -61,8 +63,8 @@ protected:
   std::shared_ptr<ParamListener> param_listener_;
   Params params_;
 
-  using StatePublisher = realtime_tools::RealtimePublisher<sensor_msgs::msg::Imu>;
-  rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr sensor_state_publisher_;
+  using StatePublisher = realtime_tools::RealtimePublisher<DynamicInterfaceValuesMsg>;
+  rclcpp::Publisher<DynamicInterfaceValuesMsg>::SharedPtr interface_values_publisher_;
   std::unique_ptr<StatePublisher> realtime_publisher_;
 
   std::shared_ptr<control_toolbox::LowPassFilter<double>> low_pass_filter_;

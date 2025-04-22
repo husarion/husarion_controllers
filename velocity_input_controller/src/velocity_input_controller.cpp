@@ -38,10 +38,8 @@ VelocityInputController::command_interface_configuration() const
   command_interfaces_config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
 
   command_interfaces_config.names.reserve(2);
-  command_interfaces_config.names.push_back(
-    std::string("drive_controller/linear/") + hardware_interface::HW_IF_VELOCITY);
-  command_interfaces_config.names.push_back(
-    std::string("pid_controller/low_pass_filter/imu/angular_velocity.z"));
+  command_interfaces_config.names.push_back(params_.command_interface_linear);
+  command_interfaces_config.names.push_back(params_.command_interface_angular);
 
   return command_interfaces_config;
 }
@@ -94,52 +92,40 @@ controller_interface::return_type VelocityInputController::update_and_write_comm
   double linear_command = reference_interfaces_[0];
   double angular_command = reference_interfaces_[1];
 
-  command_interfaces_[0].set_value(linear_command);
-  command_interfaces_[1].set_value(angular_command);
+  const auto linear_result = command_interfaces_[0].set_value(linear_command);
+  const auto angular_result = command_interfaces_[1].set_value(angular_command);
+
+  if (!linear_result || !angular_result) {
+    RCLCPP_ERROR(
+      get_node()->get_logger(), "Unable to set the command to one of the command handles!");
+    return controller_interface::return_type::ERROR;
+  }
 
   return controller_interface::return_type::OK;
 }
 
 controller_interface::CallbackReturn VelocityInputController::on_init()
 {
-  // todo: define parameters
+  try {
+    param_listener_ = std::make_shared<ParamListener>(get_node());
+    params_ = param_listener_->get_params();
+  } catch (const std::exception & err) {
+    RCLCPP_ERROR(this->get_node()->get_logger(), "Failed to load parameters: %s", err.what());
+    return controller_interface::CallbackReturn::ERROR;
+  }
+
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
 controller_interface::CallbackReturn VelocityInputController::on_configure(
   const rclcpp_lifecycle::State &)
 {
-  // todo: read parameters
-
   reference_interfaces_.resize(kReferenceInterfacesSize, std::numeric_limits<double>::quiet_NaN());
 
   // Initialize subscribers
   velocity_command_subscriber_ = get_node()->create_subscription<TwistStampedMsg>(
     "cmd_vel", rclcpp::SystemDefaultsQoS(),
-    [this](const std::shared_ptr<TwistStampedMsg> msg) -> void {
-      if ((msg->header.stamp.sec == 0) && (msg->header.stamp.nanosec == 0)) {
-        RCLCPP_WARN_ONCE(
-          get_node()->get_logger(),
-          "Received TwistStamped with zero timestamp, setting it to current "
-          "time, this message will only be shown once");
-        msg->header.stamp = get_node()->now();
-      }
-
-      const auto current_time_diff = get_node()->now() - msg->header.stamp;
-
-      if (
-        cmd_vel_timeout_ == rclcpp::Duration::from_seconds(0.0) ||
-        current_time_diff < cmd_vel_timeout_) {
-        received_velocity_msg_ptr_.writeFromNonRT(msg);
-      } else {
-        RCLCPP_WARN(
-          get_node()->get_logger(),
-          "Ignoring the received message (timestamp %.10f) because it is older than "
-          "the current time by %.10f seconds, which exceeds the allowed timeout (%.4f)",
-          rclcpp::Time(msg->header.stamp).seconds(), current_time_diff.seconds(),
-          cmd_vel_timeout_.seconds());
-      }
-    });
+    std::bind(&VelocityInputController::velocity_command_callback, this, std::placeholders::_1));
 
   return controller_interface::CallbackReturn::SUCCESS;
 }
@@ -182,6 +168,33 @@ VelocityInputController::on_export_reference_interfaces()
     &reference_interfaces_[1]));
 
   return reference_interfaces;
+}
+
+void VelocityInputController::velocity_command_callback(const std::shared_ptr<TwistStampedMsg> msg)
+{
+  if ((msg->header.stamp.sec == 0) && (msg->header.stamp.nanosec == 0)) {
+    RCLCPP_WARN_ONCE(
+      get_node()->get_logger(),
+      "Received TwistStamped with zero timestamp, setting it to current "
+      "time, this message will only be shown once");
+    msg->header.stamp = get_node()->now();
+  }
+
+  const auto current_time_diff = get_node()->now() - msg->header.stamp;
+
+  if (
+    cmd_vel_timeout_ != rclcpp::Duration::from_seconds(0.0) &&
+    current_time_diff >= cmd_vel_timeout_) {
+    RCLCPP_WARN(
+      get_node()->get_logger(),
+      "Ignoring the received message (timestamp %.10f) because it is older than "
+      "the current time by %.10f seconds, which exceeds the allowed timeout (%.4f)",
+      rclcpp::Time(msg->header.stamp).seconds(), current_time_diff.seconds(),
+      cmd_vel_timeout_.seconds());
+    return;
+  }
+
+  received_velocity_msg_ptr_.writeFromNonRT(msg);
 }
 
 }  // namespace velocity_input_controller

@@ -1,0 +1,17 @@
+velocity_input_controller:
+  command_interface_linear: {
+    type: string,
+    default_value: "linear/velocity",
+    description: "Command interface for linear velocity.",
+    validation: {
+      not_empty<>: null,
+    }
+  }
+  command_interface_angular: {
+    type: string,
+    default_value: "angular/velocity",
+    description: "Command interface for angular velocity.",
+    validation: {
+      not_empty<>: null,
+    }
+  }

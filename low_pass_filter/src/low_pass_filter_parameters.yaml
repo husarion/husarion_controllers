@@ -27,3 +27,8 @@ low_pass_filter:
     default_value: 0.707,
     description: "Defines how sharp the filter is. 0.707 is the default value for a Butterworth filter.",
   }
+  publish_interface_values: {
+    type: bool,
+    default_value: false,
+    description: "If true, the state interface values will be published to a topic.",
+  }

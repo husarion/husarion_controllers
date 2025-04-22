@@ -24,13 +24,15 @@
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
 
+#include "velocity_input_controller/velocity_input_controller_parameters.hpp"
+
 namespace velocity_input_controller
 {
 
+using TwistStampedMsg = geometry_msgs::msg::TwistStamped;
+
 class VelocityInputController : public controller_interface::ChainableControllerInterface
 {
-  using TwistStampedMsg = geometry_msgs::msg::TwistStamped;
-
 public:
   VelocityInputController();
 
@@ -65,8 +67,10 @@ public:
 protected:
   std::vector<hardware_interface::CommandInterface> on_export_reference_interfaces() override;
 
-  // std::shared_ptr<ParamListener> param_listener_;
-  // Params params_;
+  void velocity_command_callback(const std::shared_ptr<TwistStampedMsg> msg);
+
+  std::shared_ptr<ParamListener> param_listener_;
+  Params params_;
 
   rclcpp::Duration cmd_vel_timeout_ = rclcpp::Duration::from_seconds(0.5);
   rclcpp::Time previous_update_timestamp_{0};
