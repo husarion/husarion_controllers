@@ -56,18 +56,19 @@ controller_interface::return_type VelocityInputController::update_reference_from
 {
   auto logger = get_node()->get_logger();
 
-  const std::shared_ptr<TwistStampedMsg> command_msg_ptr =
-    *(received_velocity_msg_ptr_.readFromRT());
+  TwistStampedMsg::SharedPtr command_msg_ptr = nullptr;
 
-  if (command_msg_ptr == nullptr) {
-    RCLCPP_INFO_ONCE(
-      logger, "Waiting for command message to be received. This message will only be shown once.");
-    return controller_interface::return_type::OK;
+  // TODO: Add a bit more logic that checks if multiple topics are being published at the same time
+  // and sends a warning if so
+  for (auto subscriber : velocity_command_subscribers_) {
+    if (!subscriber->timeout(time)) {
+      command_msg_ptr = subscriber->get_velocity_command();
+      break;
+    }
   }
 
-  const auto age_of_last_command = time - command_msg_ptr->header.stamp;
-  // Brake if cmd_vel has timeout, override the stored command
-  if (age_of_last_command > cmd_vel_timeout_) {
+  // No command message received or timeout was reached
+  if (command_msg_ptr == nullptr) {
     reference_interfaces_[0] = 0.0;
     reference_interfaces_[1] = 0.0;
   } else if (
@@ -77,11 +78,9 @@ controller_interface::return_type VelocityInputController::update_reference_from
     reference_interfaces_[1] = command_msg_ptr->twist.angular.z;
   } else {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger, *get_node()->get_clock(), cmd_vel_timeout_.seconds() * 1000,
+      logger, *get_node()->get_clock(), 1000,
       "Command message contains NaNs. Not updating reference interfaces.");
   }
-
-  previous_update_timestamp_ = time;
 
   return controller_interface::return_type::OK;
 }
@@ -123,9 +122,10 @@ controller_interface::CallbackReturn VelocityInputController::on_configure(
   reference_interfaces_.resize(kReferenceInterfacesSize, std::numeric_limits<double>::quiet_NaN());
 
   // Initialize subscribers
-  velocity_command_subscriber_ = get_node()->create_subscription<TwistStampedMsg>(
-    "cmd_vel", rclcpp::SystemDefaultsQoS(),
-    std::bind(&VelocityInputController::velocity_command_callback, this, std::placeholders::_1));
+  for (const auto & name : params_.cmd_vel_input_topics) {
+    velocity_command_subscribers_.push_back(
+      std::make_shared<VelocityCommandSubscriber>(this->get_node(), name, params_.cmd_vel_timeout));
+  }
 
   return controller_interface::CallbackReturn::SUCCESS;
 }
@@ -168,33 +168,6 @@ VelocityInputController::on_export_reference_interfaces()
     &reference_interfaces_[1]));
 
   return reference_interfaces;
-}
-
-void VelocityInputController::velocity_command_callback(const std::shared_ptr<TwistStampedMsg> msg)
-{
-  if ((msg->header.stamp.sec == 0) && (msg->header.stamp.nanosec == 0)) {
-    RCLCPP_WARN_ONCE(
-      get_node()->get_logger(),
-      "Received TwistStamped with zero timestamp, setting it to current "
-      "time, this message will only be shown once");
-    msg->header.stamp = get_node()->now();
-  }
-
-  const auto current_time_diff = get_node()->now() - msg->header.stamp;
-
-  if (
-    cmd_vel_timeout_ != rclcpp::Duration::from_seconds(0.0) &&
-    current_time_diff >= cmd_vel_timeout_) {
-    RCLCPP_WARN(
-      get_node()->get_logger(),
-      "Ignoring the received message (timestamp %.10f) because it is older than "
-      "the current time by %.10f seconds, which exceeds the allowed timeout (%.4f)",
-      rclcpp::Time(msg->header.stamp).seconds(), current_time_diff.seconds(),
-      cmd_vel_timeout_.seconds());
-    return;
-  }
-
-  received_velocity_msg_ptr_.writeFromNonRT(msg);
 }
 
 }  // namespace velocity_input_controller

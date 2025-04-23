@@ -1,4 +1,21 @@
 velocity_input_controller:
+  cmd_vel_input_topics: {
+    type: string_array,
+    default_value: ["cmd_vel"],
+    description: "List of topics to subscribe to for velocity inputs. The order will indicate priority of the topics.",
+    validation: {
+      not_empty<>: null,
+      unique<>: null,
+    }
+  }
+  cmd_vel_timeout: {
+    type: double,
+    default_value: 0.5,
+    description: "Timeout for command velocity topics in seconds.",
+    validation: {
+      gt<>: [0.0],
+    }
+  }
   command_interface_linear: {
     type: string,
     default_value: "linear/velocity",

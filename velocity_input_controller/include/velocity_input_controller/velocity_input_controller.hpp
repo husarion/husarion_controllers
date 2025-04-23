@@ -19,11 +19,12 @@
 #include <vector>
 
 #include <controller_interface/chainable_controller_interface.hpp>
-#include <realtime_tools/realtime_buffer.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <realtime_tools/realtime_buffer.hpp>
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
 
+#include "velocity_input_controller/velocity_command_subscriber.hpp"
 #include "velocity_input_controller/velocity_input_controller_parameters.hpp"
 
 namespace velocity_input_controller
@@ -67,19 +68,10 @@ public:
 protected:
   std::vector<hardware_interface::CommandInterface> on_export_reference_interfaces() override;
 
-  void velocity_command_callback(const std::shared_ptr<TwistStampedMsg> msg);
-
   std::shared_ptr<ParamListener> param_listener_;
   Params params_;
 
-  rclcpp::Duration cmd_vel_timeout_ = rclcpp::Duration::from_seconds(0.5);
-  rclcpp::Time previous_update_timestamp_{0};
-
-  rclcpp::Subscription<TwistStampedMsg>::SharedPtr velocity_command_subscriber_ = nullptr;
-
-  realtime_tools::RealtimeBuffer<std::shared_ptr<TwistStampedMsg>> received_velocity_msg_ptr_{
-    nullptr};
-
+  std::vector<std::shared_ptr<VelocityCommandSubscriber>> velocity_command_subscribers_;
 private:
   static constexpr uint kReferenceInterfacesSize = 2;
 };
