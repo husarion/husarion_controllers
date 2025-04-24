@@ -54,15 +54,17 @@ VelocityInputController::state_interface_configuration() const
 controller_interface::return_type VelocityInputController::update_reference_from_subscribers(
   const rclcpp::Time & time, const rclcpp::Duration &)
 {
+  std::string source = kSourceNotPublished;
   auto logger = get_node()->get_logger();
 
   TwistStampedMsg::SharedPtr command_msg_ptr = nullptr;
 
   // TODO: Add a bit more logic that checks if multiple topics are being published at the same time
   // and sends a warning if so
-  for (auto subscriber : velocity_command_subscribers_) {
+  for (auto subscriber : cmd_vel_subscribers_) {
     if (!subscriber->timeout(time)) {
       command_msg_ptr = subscriber->get_velocity_command();
+      source = subscriber->get_source_type();
       break;
     }
   }
@@ -80,6 +82,13 @@ controller_interface::return_type VelocityInputController::update_reference_from
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger, *get_node()->get_clock(), 1000,
       "Command message contains NaNs. Not updating reference interfaces.");
+  }
+
+  // Publish the source of the cmd_vel
+  if (cmd_vel_source_ != source && realtime_cmd_vel_source_publisher_->trylock()) {
+    realtime_cmd_vel_source_publisher_->msg_.data = source;
+    realtime_cmd_vel_source_publisher_->unlockAndPublish();
+    cmd_vel_source_ = source;
   }
 
   return controller_interface::return_type::OK;
@@ -122,10 +131,20 @@ controller_interface::CallbackReturn VelocityInputController::on_configure(
   reference_interfaces_.resize(kReferenceInterfacesSize, std::numeric_limits<double>::quiet_NaN());
 
   // Initialize subscribers
-  for (const auto & name : params_.cmd_vel_input_topics) {
-    velocity_command_subscribers_.push_back(
-      std::make_shared<VelocityCommandSubscriber>(this->get_node(), name, params_.cmd_vel_timeout));
+  for (const auto & name : params_.cmd_vel_inputs) {
+    cmd_vel_subscribers_.push_back(std::make_shared<VelocityCommandSubscriber>(
+      this->get_node(), params_.cmd_vel_topic + "/" + name, name, params_.cmd_vel_timeout));
   }
+
+  // Add base topic with source type "unknown"
+  cmd_vel_subscribers_.push_back(std::make_shared<VelocityCommandSubscriber>(
+    this->get_node(), params_.cmd_vel_topic, "unknown", params_.cmd_vel_timeout));
+
+  cmd_vel_source_publisher_ = this->get_node()->create_publisher<StringMsg>(
+    params_.cmd_vel_topic + "/source",
+    rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
+  realtime_cmd_vel_source_publisher_ =
+    std::make_shared<realtime_tools::RealtimePublisher<StringMsg>>(cmd_vel_source_publisher_);
 
   return controller_interface::CallbackReturn::SUCCESS;
 }

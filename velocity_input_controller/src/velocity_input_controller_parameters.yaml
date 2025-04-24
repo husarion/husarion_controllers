@@ -1,34 +1,36 @@
 velocity_input_controller:
-  cmd_vel_input_topics: {
-    type: string_array,
-    default_value: ["cmd_vel"],
-    description: "List of topics to subscribe to for velocity inputs. The order will indicate priority of the topics.",
-    validation: {
-      not_empty<>: null,
-      unique<>: null,
+  cmd_vel_topic:
+    {
+      type: string,
+      default_value: "cmd_vel",
+      description: "The base topic for command velocity. The controller will alway subscribe to this topic and assume it's source as 'unknown'.",
+      validation: { not_empty<>: null },
     }
-  }
-  cmd_vel_timeout: {
-    type: double,
-    default_value: 0.5,
-    description: "Timeout for command velocity topics in seconds.",
-    validation: {
-      gt<>: [0.0],
+  cmd_vel_inputs:
+    {
+      type: string_array,
+      default_value: [],
+      description: "List of command velocity inputs. The controller will subscribe to '<cmd_vel_topic>/<name>' for each name in the list. The order will indicate priority of the topics.",
+      validation: { unique<>: null },
     }
-  }
-  command_interface_linear: {
-    type: string,
-    default_value: "linear/velocity",
-    description: "Command interface for linear velocity.",
-    validation: {
-      not_empty<>: null,
+  cmd_vel_timeout:
+    {
+      type: double,
+      default_value: 0.5,
+      description: "Timeout for command velocity topics in seconds.",
+      validation: { gt<>: [0.0] },
     }
-  }
-  command_interface_angular: {
-    type: string,
-    default_value: "angular/velocity",
-    description: "Command interface for angular velocity.",
-    validation: {
-      not_empty<>: null,
+  command_interface_linear:
+    {
+      type: string,
+      default_value: "linear/velocity",
+      description: "Command interface for linear velocity.",
+      validation: { not_empty<>: null },
     }
-  }
+  command_interface_angular:
+    {
+      type: string,
+      default_value: "angular/velocity",
+      description: "Command interface for angular velocity.",
+      validation: { not_empty<>: null },
+    }

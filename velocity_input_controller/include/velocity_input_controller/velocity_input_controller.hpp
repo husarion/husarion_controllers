@@ -21,8 +21,10 @@
 #include <controller_interface/chainable_controller_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <realtime_tools/realtime_buffer.hpp>
+#include <realtime_tools/realtime_publisher.hpp>
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include "velocity_input_controller/velocity_command_subscriber.hpp"
 #include "velocity_input_controller/velocity_input_controller_parameters.hpp"
@@ -30,6 +32,7 @@
 namespace velocity_input_controller
 {
 
+using StringMsg = std_msgs::msg::String;
 using TwistStampedMsg = geometry_msgs::msg::TwistStamped;
 
 class VelocityInputController : public controller_interface::ChainableControllerInterface
@@ -68,10 +71,17 @@ public:
 protected:
   std::vector<hardware_interface::CommandInterface> on_export_reference_interfaces() override;
 
+  static constexpr char kSourceNotPublished[] = "not_published";
+
   std::shared_ptr<ParamListener> param_listener_;
   Params params_;
 
-  std::vector<std::shared_ptr<VelocityCommandSubscriber>> velocity_command_subscribers_;
+  std::string cmd_vel_source_;
+
+  std::vector<std::shared_ptr<VelocityCommandSubscriber>> cmd_vel_subscribers_;
+  rclcpp::Publisher<StringMsg>::SharedPtr cmd_vel_source_publisher_;
+  realtime_tools::RealtimePublisher<StringMsg>::SharedPtr realtime_cmd_vel_source_publisher_;
+
 private:
   static constexpr uint kReferenceInterfacesSize = 2;
 };
