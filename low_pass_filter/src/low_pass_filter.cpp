@@ -58,6 +58,10 @@ controller_interface::return_type LowPassFilter::update_and_write_commands(
   for (size_t i = 0; i < state_interfaces_.size(); ++i) {
     low_pass_filter_->update(
       state_interfaces_[i].get_optional<double>().value(), state_interfaces_values_[i]);
+
+    if (std::abs(state_interfaces_values_[i]) < params_.zero_threshold) {
+      state_interfaces_values_[i] = 0.0;
+    }
   }
 
   if (realtime_publisher_ && realtime_publisher_->trylock()) {

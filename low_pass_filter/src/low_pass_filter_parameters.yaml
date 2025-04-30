@@ -32,3 +32,8 @@ low_pass_filter:
     default_value: false,
     description: "If true, the state interface values will be published to a topic.",
   }
+  zero_threshold: {
+    type: double,
+    default_value: 0.0,
+    description: "If the filtered value is below this threshold, it will be set to zero.",
+  }
