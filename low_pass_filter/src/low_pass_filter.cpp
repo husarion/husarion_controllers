@@ -135,7 +135,7 @@ std::vector<hardware_interface::StateInterface> LowPassFilter::on_export_state_i
   std::size_t index = 0;
   for (const auto & name : params_.state_interface_names) {
     state_interfaces.push_back(hardware_interface::StateInterface(
-      std::string(this->get_node()->get_name()) + "/imu", name, &state_interfaces_values_[index]));
+      std::string(this->get_node()->get_name()), name, &state_interfaces_values_[index]));
     index++;
   }
 
