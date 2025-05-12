@@ -47,7 +47,6 @@
 #include "mecanum_drive_controller/mecanum_drive_controller_parameters.hpp"
 #include "mecanum_drive_controller/odometry.hpp"
 #include "mecanum_drive_controller/speed_limiter.hpp"
-#include "mecanum_drive_controller/visibility_control.h"
 #include "odometry.hpp"
 
 namespace mecanum_drive_controller
@@ -57,44 +56,30 @@ class MecanumDriveController : public controller_interface::ControllerInterface
   using TwistStamped = geometry_msgs::msg::TwistStamped;
 
 public:
-  MECANUM_DRIVE_CONTROLLER_PUBLIC
   MecanumDriveController();
 
-  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::InterfaceConfiguration command_interface_configuration() const override;
 
-  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::InterfaceConfiguration state_interface_configuration() const override;
 
-  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::return_type update(
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
-  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_init() override;
 
-  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_configure(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_activate(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_deactivate(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_cleanup(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  MECANUM_DRIVE_CONTROLLER_PUBLIC
   controller_interface::CallbackReturn on_error(
-    const rclcpp_lifecycle::State & previous_state) override;
-
-  MECANUM_DRIVE_CONTROLLER_PUBLIC
-  controller_interface::CallbackReturn on_shutdown(
     const rclcpp_lifecycle::State & previous_state) override;
 
 protected:
@@ -124,6 +109,9 @@ protected:
 
   Odometry odometry_;
 
+  // Timeout to consider cmd_vel commands old
+  rclcpp::Duration cmd_vel_timeout_ = rclcpp::Duration::from_seconds(0.5);
+
   std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> odometry_publisher_ = nullptr;
   std::shared_ptr<realtime_tools::RealtimePublisher<nav_msgs::msg::Odometry>>
     realtime_odometry_publisher_ = nullptr;
@@ -132,10 +120,6 @@ protected:
     nullptr;
   std::shared_ptr<realtime_tools::RealtimePublisher<tf2_msgs::msg::TFMessage>>
     realtime_odometry_transform_publisher_ = nullptr;
-
-  // Timeout to consider cmd_vel commands old
-  std::chrono::milliseconds cmd_vel_timeout_{500};
-
   bool subscriber_is_active_ = false;
   rclcpp::Subscription<TwistStamped>::SharedPtr velocity_command_subscriber_ = nullptr;
 

@@ -546,12 +546,6 @@ void MecanumDriveController::reset_buffers()
   received_velocity_msg_ptr_.writeFromNonRT(empty_msg_ptr);
 }
 
-controller_interface::CallbackReturn MecanumDriveController::on_shutdown(
-  const rclcpp_lifecycle::State &)
-{
-  return controller_interface::CallbackReturn::SUCCESS;
-}
-
 void MecanumDriveController::halt()
 {
   const bool value_set_error =
