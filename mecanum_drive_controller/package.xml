@@ -2,7 +2,7 @@
 <!-- Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers) -->
 <package format="3">
   <name>mecanum_drive_controller</name>
- <version>1.0.0</version>
+  <version>1.0.0</version>
 
   <description>Controller for a mecanum drive mobile base.</description>
 

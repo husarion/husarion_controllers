@@ -53,16 +53,13 @@ public:
     double min_jerk = std::numeric_limits<double>::quiet_NaN(),
     double max_jerk = std::numeric_limits<double>::quiet_NaN())
   {
-    if (!has_velocity_limits)
-    {
+    if (!has_velocity_limits) {
       min_velocity = max_velocity = std::numeric_limits<double>::quiet_NaN();
     }
-    if (!has_acceleration_limits)
-    {
+    if (!has_acceleration_limits) {
       max_deceleration = max_acceleration = std::numeric_limits<double>::quiet_NaN();
     }
-    if (!has_jerk_limits)
-    {
+    if (!has_jerk_limits) {
       min_jerk = max_jerk = std::numeric_limits<double>::quiet_NaN();
     }
     speed_limiter_ = control_toolbox::RateLimiter<double>(

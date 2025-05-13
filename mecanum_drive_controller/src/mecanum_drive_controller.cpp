@@ -337,8 +337,7 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
   publish_limited_velocity_ = params_.publish_limited_velocity;
 
   // START DEPRECATED
-  if (!params_.linear.x.has_velocity_limits)
-  {
+  if (!params_.linear.x.has_velocity_limits) {
     RCLCPP_WARN(
       logger,
       "[deprecated] has_velocity_limits parameter is deprecated, instead set the respective limits "
@@ -346,8 +345,7 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
     params_.linear.x.min_velocity = params_.linear.x.max_velocity =
       std::numeric_limits<double>::quiet_NaN();
   }
-  if (!params_.linear.x.has_acceleration_limits)
-  {
+  if (!params_.linear.x.has_acceleration_limits) {
     RCLCPP_WARN(
       logger,
       "[deprecated] has_acceleration_limits parameter is deprecated, instead set the respective "
@@ -357,8 +355,7 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
       params_.linear.x.max_deceleration_reverse = params_.linear.x.max_acceleration_reverse =
         std::numeric_limits<double>::quiet_NaN();
   }
-  if (!params_.linear.x.has_jerk_limits)
-  {
+  if (!params_.linear.x.has_jerk_limits) {
     RCLCPP_WARN(
       logger,
       "[deprecated] has_jerk_limits parameter is deprecated, instead set the respective limits to "
@@ -366,8 +363,7 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
     params_.linear.x.min_jerk = params_.linear.x.max_jerk =
       std::numeric_limits<double>::quiet_NaN();
   }
-  if (!params_.angular.z.has_velocity_limits)
-  {
+  if (!params_.angular.z.has_velocity_limits) {
     RCLCPP_WARN(
       logger,
       "[deprecated] has_velocity_limits parameter is deprecated, instead set the respective limits "
@@ -375,8 +371,7 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
     params_.angular.z.min_velocity = params_.angular.z.max_velocity =
       std::numeric_limits<double>::quiet_NaN();
   }
-  if (!params_.angular.z.has_acceleration_limits)
-  {
+  if (!params_.angular.z.has_acceleration_limits) {
     RCLCPP_WARN(
       logger,
       "[deprecated] has_acceleration_limits parameter is deprecated, instead set the respective "
@@ -386,8 +381,7 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
       params_.angular.z.max_deceleration_reverse = params_.angular.z.max_acceleration_reverse =
         std::numeric_limits<double>::quiet_NaN();
   }
-  if (!params_.angular.z.has_jerk_limits)
-  {
+  if (!params_.angular.z.has_jerk_limits) {
     RCLCPP_WARN(
       logger,
       "[deprecated] has_jerk_limits parameter is deprecated, instead set the respective limits to "
@@ -397,10 +391,10 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
   }
   try {
     limiter_linear_x_ = std::make_unique<SpeedLimiter>(
-    params_.linear.x.min_velocity, params_.linear.x.max_velocity,
-    params_.linear.x.max_acceleration_reverse, params_.linear.x.max_acceleration,
-    params_.linear.x.max_deceleration, params_.linear.x.max_deceleration_reverse,
-    params_.linear.x.min_jerk, params_.linear.x.max_jerk);
+      params_.linear.x.min_velocity, params_.linear.x.max_velocity,
+      params_.linear.x.max_acceleration_reverse, params_.linear.x.max_acceleration,
+      params_.linear.x.max_deceleration, params_.linear.x.max_deceleration_reverse,
+      params_.linear.x.min_jerk, params_.linear.x.max_jerk);
   } catch (const std::runtime_error & e) {
     RCLCPP_ERROR(
       get_node()->get_logger(), "Error configuring x linear speed limiter: %s", e.what());
@@ -463,7 +457,7 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
       received_velocity_msg_ptr_.writeFromNonRT(std::move(msg));
     });
 
-  // initialize odometry publisher and messasge
+  // initialize odometry publisher and message
   odometry_publisher_ = get_node()->create_publisher<nav_msgs::msg::Odometry>(
     DEFAULT_ODOMETRY_TOPIC, rclcpp::SystemDefaultsQoS());
   realtime_odometry_publisher_ =
