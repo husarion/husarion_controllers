@@ -336,34 +336,93 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
   cmd_vel_timeout_ = std::chrono::milliseconds{static_cast<int>(params_.cmd_vel_timeout * 1000.0)};
   publish_limited_velocity_ = params_.publish_limited_velocity;
 
+  // START DEPRECATED
+  if (!params_.linear.x.has_velocity_limits)
+  {
+    RCLCPP_WARN(
+      logger,
+      "[deprecated] has_velocity_limits parameter is deprecated, instead set the respective limits "
+      "to NAN");
+    params_.linear.x.min_velocity = params_.linear.x.max_velocity =
+      std::numeric_limits<double>::quiet_NaN();
+  }
+  if (!params_.linear.x.has_acceleration_limits)
+  {
+    RCLCPP_WARN(
+      logger,
+      "[deprecated] has_acceleration_limits parameter is deprecated, instead set the respective "
+      "limits to "
+      "NAN");
+    params_.linear.x.max_deceleration = params_.linear.x.max_acceleration =
+      params_.linear.x.max_deceleration_reverse = params_.linear.x.max_acceleration_reverse =
+        std::numeric_limits<double>::quiet_NaN();
+  }
+  if (!params_.linear.x.has_jerk_limits)
+  {
+    RCLCPP_WARN(
+      logger,
+      "[deprecated] has_jerk_limits parameter is deprecated, instead set the respective limits to "
+      "NAN");
+    params_.linear.x.min_jerk = params_.linear.x.max_jerk =
+      std::numeric_limits<double>::quiet_NaN();
+  }
+  if (!params_.angular.z.has_velocity_limits)
+  {
+    RCLCPP_WARN(
+      logger,
+      "[deprecated] has_velocity_limits parameter is deprecated, instead set the respective limits "
+      "to NAN");
+    params_.angular.z.min_velocity = params_.angular.z.max_velocity =
+      std::numeric_limits<double>::quiet_NaN();
+  }
+  if (!params_.angular.z.has_acceleration_limits)
+  {
+    RCLCPP_WARN(
+      logger,
+      "[deprecated] has_acceleration_limits parameter is deprecated, instead set the respective "
+      "limits to "
+      "NAN");
+    params_.angular.z.max_deceleration = params_.angular.z.max_acceleration =
+      params_.angular.z.max_deceleration_reverse = params_.angular.z.max_acceleration_reverse =
+        std::numeric_limits<double>::quiet_NaN();
+  }
+  if (!params_.angular.z.has_jerk_limits)
+  {
+    RCLCPP_WARN(
+      logger,
+      "[deprecated] has_jerk_limits parameter is deprecated, instead set the respective limits to "
+      "NAN");
+    params_.angular.z.min_jerk = params_.angular.z.max_jerk =
+      std::numeric_limits<double>::quiet_NaN();
+  }
   try {
-    limiter_linear_x_ = SpeedLimiter(
-      params_.linear.x.has_velocity_limits, params_.linear.x.has_acceleration_limits,
-      params_.linear.x.has_jerk_limits, params_.linear.x.min_velocity,
-      params_.linear.x.max_velocity, params_.linear.x.min_acceleration,
-      params_.linear.x.max_acceleration, params_.linear.x.min_jerk, params_.linear.x.max_jerk);
+    limiter_linear_x_ = std::make_unique<SpeedLimiter>(
+    params_.linear.x.min_velocity, params_.linear.x.max_velocity,
+    params_.linear.x.max_acceleration_reverse, params_.linear.x.max_acceleration,
+    params_.linear.x.max_deceleration, params_.linear.x.max_deceleration_reverse,
+    params_.linear.x.min_jerk, params_.linear.x.max_jerk);
   } catch (const std::runtime_error & e) {
     RCLCPP_ERROR(
       get_node()->get_logger(), "Error configuring x linear speed limiter: %s", e.what());
   }
 
   try {
-    limiter_linear_y_ = SpeedLimiter(
-      params_.linear.y.has_velocity_limits, params_.linear.y.has_acceleration_limits,
-      params_.linear.y.has_jerk_limits, params_.linear.y.min_velocity,
-      params_.linear.y.max_velocity, params_.linear.y.min_acceleration,
-      params_.linear.y.max_acceleration, params_.linear.y.min_jerk, params_.linear.y.max_jerk);
+    limiter_linear_y_ = std::make_unique<SpeedLimiter>(
+      params_.linear.y.min_velocity, params_.linear.y.max_velocity,
+      params_.linear.y.max_acceleration_reverse, params_.linear.y.max_acceleration,
+      params_.linear.y.max_deceleration, params_.linear.y.max_deceleration_reverse,
+      params_.linear.y.min_jerk, params_.linear.y.max_jerk);
   } catch (const std::runtime_error & e) {
     RCLCPP_ERROR(
       get_node()->get_logger(), "Error configuring y linear speed limiter: %s", e.what());
   }
 
   try {
-    limiter_angular_ = SpeedLimiter(
-      params_.angular.z.has_velocity_limits, params_.angular.z.has_acceleration_limits,
-      params_.angular.z.has_jerk_limits, params_.angular.z.min_velocity,
-      params_.angular.z.max_velocity, params_.angular.z.min_acceleration,
-      params_.angular.z.max_acceleration, params_.angular.z.min_jerk, params_.angular.z.max_jerk);
+    limiter_angular_ = std::make_unique<SpeedLimiter>(
+      params_.angular.z.min_velocity, params_.angular.z.max_velocity,
+      params_.angular.z.max_acceleration_reverse, params_.angular.z.max_acceleration,
+      params_.angular.z.max_deceleration, params_.angular.z.max_deceleration_reverse,
+      params_.angular.z.min_jerk, params_.angular.z.max_jerk);
   } catch (const std::runtime_error & e) {
     RCLCPP_ERROR(get_node()->get_logger(), "Error configuring angular speed limiter: %s", e.what());
   }
