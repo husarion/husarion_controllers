@@ -39,38 +39,22 @@ class Odometry
 public:
   explicit Odometry(size_t velocity_rolling_window_size = 10);
 
-  void init(const rclcpp::Time& time);
-  bool update(double front_left_pos, double front_right_pos, double rear_left_pos, double rear_right_pos,
-              const rclcpp::Time& time);
-  bool updateFromVelocity(double front_left_vel, double front_right_vel, double rear_left_vel, double rear_right_vel,
-                          const rclcpp::Time& time);
-  void updateOpenLoop(double linear_x, double linear_y, double angular, const rclcpp::Time& time);
+  void init(const rclcpp::Time & time);
+  bool update(
+    double front_left_pos, double front_right_pos, double rear_left_pos, double rear_right_pos,
+    const rclcpp::Time & time);
+  bool updateFromVelocity(
+    double front_left_vel, double front_right_vel, double rear_left_vel, double rear_right_vel,
+    const rclcpp::Time & time);
+  void updateOpenLoop(double linear_x, double linear_y, double angular, const rclcpp::Time & time);
   void resetOdometry();
 
-  double getX() const
-  {
-    return x_;
-  }
-  double getY() const
-  {
-    return y_;
-  }
-  double getHeading() const
-  {
-    return heading_;
-  }
-  double getLinearX() const
-  {
-    return linear_x_;
-  }
-  double getLinearY() const
-  {
-    return linear_y_;
-  }
-  double getAngular() const
-  {
-    return angular_;
-  }
+  double getX() const { return x_; }
+  double getY() const { return y_; }
+  double getHeading() const { return heading_; }
+  double getLinearX() const { return linear_x_; }
+  double getLinearY() const { return linear_y_; }
+  double getAngular() const { return angular_; }
 
   void setWheelParams(double wheel_separation_x, double wheel_separation_y, double wheel_radius);
   void setVelocityRollingWindowSize(size_t velocity_rolling_window_size);
