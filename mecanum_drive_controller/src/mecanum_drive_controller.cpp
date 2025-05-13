@@ -212,11 +212,11 @@ controller_interface::return_type MecanumDriveController::update(
 
   auto & last_command = previous_commands_.back().twist;
   auto & second_to_last_command = previous_commands_.front().twist;
-  limiter_linear_x_.limit(
+  limiter_linear_x_->limit(
     linear_command_x, last_command.linear.x, second_to_last_command.linear.x, period.seconds());
-  limiter_linear_y_.limit(
+  limiter_linear_y_->limit(
     linear_command_y, last_command.linear.y, second_to_last_command.linear.y, period.seconds());
-  limiter_angular_.limit(
+  limiter_angular_->limit(
     angular_command, last_command.angular.z, second_to_last_command.angular.z, period.seconds());
 
   previous_commands_.pop();

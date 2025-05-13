@@ -13,19 +13,24 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra)
 endif()
 
+# find_package(ros2_control_cmake REQUIRED)
+# set_compiler_options()
+# export_windows_symbols()
+
 set(THIS_PACKAGE_INCLUDE_DEPENDS
-    controller_interface
-    generate_parameter_library
-    geometry_msgs
-    hardware_interface
-    nav_msgs
-    pluginlib
-    rclcpp
-    rclcpp_lifecycle
-    rcpputils
-    realtime_tools
-    tf2
-    tf2_msgs
+  control_toolbox
+  controller_interface
+  generate_parameter_library
+  geometry_msgs
+  hardware_interface
+  nav_msgs
+  pluginlib
+  rclcpp
+  rclcpp_lifecycle
+  rcpputils
+  realtime_tools
+  tf2
+  tf2_msgs
 )
 
 find_package(ament_cmake REQUIRED)
@@ -33,24 +38,25 @@ foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
+# get include dirs from control_toolbox for the custom validators
+get_target_property(TB_INCLUDE_DIRS control_toolbox::rate_limiter_parameters INTERFACE_INCLUDE_DIRECTORIES)
 generate_parameter_library(mecanum_drive_controller_parameters
   src/mecanum_drive_controller_parameter.yaml
+  ${TB_INCLUDE_DIRS}/control_toolbox/custom_validators.hpp
 )
 
 add_library(mecanum_drive_controller SHARED
   src/mecanum_drive_controller.cpp
   src/odometry.cpp
-  src/speed_limiter.cpp
 )
+target_compile_features(mecanum_drive_controller PUBLIC cxx_std_17)
 target_include_directories(mecanum_drive_controller PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/mecanum_drive_controller>
 )
-target_link_libraries(mecanum_drive_controller PUBLIC mecanum_drive_controller_parameters)
+target_link_libraries(mecanum_drive_controller PUBLIC mecanum_drive_controller_parameters
+    control_toolbox::rate_limiter_parameters)
 ament_target_dependencies(mecanum_drive_controller PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
-# Causes the visibility macros to use dllexport rather than dllimport,
-# which is appropriate when building the dll but not consuming it.
-target_compile_definitions(mecanum_drive_controller PRIVATE "MECANUM_DRIVE_CONTROLLER_BUILDING_DLL")
 pluginlib_export_plugin_description_file(controller_interface mecanum_drive_plugin.xml)
 
 install(
