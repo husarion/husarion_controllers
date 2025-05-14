@@ -3,17 +3,17 @@
 <package format="3">
   <name>mecanum_drive_controller</name>
   <version>1.0.0</version>
-
   <description>Controller for a mecanum drive mobile base.</description>
-
   <maintainer email="support@husarion.com">Husarion</maintainer>
   <license>Apache License 2.0</license>
 
   <url type="website">https://husarion.com/</url>
-  <url type="repository">https://github.com/husarion/panther-navigation</url>
-  <url type="bugtracker">https://github.com/husarion/panther-navigation/issues</url>
+  <url type="repository">https://github.com/husarion/husarion_controllers</url>
+  <url type="bugtracker">https://github.com/husarion/husarion_controllers/issues</url>
 
   <author email="jakub.delicat@husarion.com">Jakub Delicat</author>
+  <author email="rafal.gorecki@husarion.com">Rafał Górecki</author>
+  <author email="dawid.kmak@husarion.com">Dawid Kmak</author>
   <author email="maciej.stepien@husarion.com">Maciej Stępień</author>
   <author email="bence.magyar.robotics@gmail.com">Bence Magyar</author>
   <author email="jordan.palacios@pal-robotics.com">Jordan Palacios</author>
