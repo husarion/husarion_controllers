@@ -11,7 +11,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra)
+  add_compile_options(-Wall -Wextra -Wpedantic -Wshadow -Wold-style-cast)
 endif()
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
@@ -44,7 +44,6 @@ generate_parameter_library(
 
 add_library(mecanum_drive_controller SHARED src/mecanum_drive_controller.cpp
                                             src/odometry.cpp)
-target_compile_features(mecanum_drive_controller PUBLIC cxx_std_17)
 target_include_directories(
   mecanum_drive_controller
   PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -56,6 +55,8 @@ ament_target_dependencies(mecanum_drive_controller PUBLIC
                           ${THIS_PACKAGE_INCLUDE_DEPENDS})
 pluginlib_export_plugin_description_file(controller_interface
                                          mecanum_drive_plugin.xml)
+
+install(DIRECTORY include/ DESTINATION include/mecanum_drive_controller)
 
 install(
   TARGETS mecanum_drive_controller mecanum_drive_controller_parameters

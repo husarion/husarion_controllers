@@ -2,18 +2,34 @@ mecanum_drive_controller:
   front_left_wheel_name: {
     type: string,
     description: "Link name of the front left side wheel",
+    read_only: true,
+    validation: {
+      not_empty<>: null,
+    }
   }
   front_right_wheel_name: {
     type: string,
     description: "Link name of the front right side wheel",
+    read_only: true,
+    validation: {
+      not_empty<>: null,
+    }
   }
   rear_left_wheel_name: {
     type: string,
     description: "Link name of the rear left side wheel",
+    read_only: true,
+    validation: {
+      not_empty<>: null,
+    }
   }
   rear_right_wheel_name: {
     type: string,
     description: "Link name of the rear right side wheel",
+    read_only: true,
+    validation: {
+      not_empty<>: null,
+    }
   }
   wheel_separation_x: {
     type: double,
