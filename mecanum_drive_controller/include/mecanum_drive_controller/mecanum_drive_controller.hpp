@@ -35,7 +35,6 @@
 #include <hardware_interface/handle.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_lifecycle/state.hpp>
-#include <realtime_tools/realtime_box.hpp>
 #include <realtime_tools/realtime_buffer.hpp>
 #include <realtime_tools/realtime_publisher.hpp>
 
