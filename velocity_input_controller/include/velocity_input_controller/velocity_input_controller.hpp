@@ -68,8 +68,18 @@ public:
   controller_interface::CallbackReturn on_error(
     const rclcpp_lifecycle::State & previous_state) override;
 
+  rclcpp::NodeOptions define_custom_node_options() const
+  {
+    rclcpp::NodeOptions node_options;
+    node_options.allow_undeclared_parameters(true);
+    node_options.automatically_declare_parameters_from_overrides(true);
+    return node_options;
+  }
+
 protected:
   std::vector<hardware_interface::CommandInterface> on_export_reference_interfaces() override;
+
+  std::string get_source_from_prefix(const std::string & prefix) const;
 
   static constexpr char kSourceNotPublished[] = "not_published";
 

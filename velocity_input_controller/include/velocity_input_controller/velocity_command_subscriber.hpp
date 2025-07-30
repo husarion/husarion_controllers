@@ -36,10 +36,11 @@ class VelocityCommandSubscriber
 public:
   VelocityCommandSubscriber(
     rclcpp_lifecycle::LifecycleNode::SharedPtr node, const std::string & topic_name,
-    const std::string & source_type, const float timeout = 0.5)
+    const std::string & source_type, const float timeout = 0.5, const std::uint8_t priority = 0)
   : node_(std::move(node)),
     source_type_(source_type),
-    cmd_vel_timeout_(rclcpp::Duration(std::chrono::milliseconds(static_cast<int>(timeout * 1000))))
+    cmd_vel_timeout_(rclcpp::Duration(std::chrono::milliseconds(static_cast<int>(timeout * 1000)))),
+    priority_(priority)
   {
     if (auto node = node_.lock()) {
       velocity_command_subscriber_ = node->create_subscription<TwistStampedMsg>(
@@ -66,6 +67,8 @@ public:
   }
 
   std::string get_source_type() const { return source_type_; }
+
+  std::uint8_t get_priority() const { return priority_; }
 
 protected:
   void velocity_command_callback(const TwistStampedMsg::SharedPtr msg)
@@ -101,6 +104,7 @@ protected:
 
   const std::string source_type_;
   const rclcpp::Duration cmd_vel_timeout_;
+  const std::uint8_t priority_;
 
   rclcpp::Subscription<TwistStampedMsg>::SharedPtr velocity_command_subscriber_;
   realtime_tools::RealtimeBuffer<TwistStampedMsg::SharedPtr> received_velocity_msg_ptr_{nullptr};
