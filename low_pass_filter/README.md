@@ -14,7 +14,7 @@ The `LowPassFilter` is a ROS 2 chainable controller designed to apply a low-pass
 - `sampling_frequency` [*double*, default: **100.0**]: Filter sampling frequency in Hz.
 - `damping_frequency` [*double*, default: **0.1**]: Filter damping frequency in Hz (Is it?).
 - `damping_intensity` [*double*, default: **0.707**]: Defines how sharp the filter is. 0.707 is the default value for a Butterworth filter.
-- `publish_interface_values` [*bool*, default: **true**]: If true, the state interface values will be published to a topic.
+- `publish_interface_values` [*bool*, default: **false**]: If true, the state interface values will be published to a topic.
 - `zero_threshold` [*double*, default: **0.0025**]: If the filtered value is below this threshold, it will be set to zero.
 
 ## Interfaces
@@ -33,6 +33,6 @@ low_pass_filter:
     sampling_frequency: 100.0
     damping_frequency: 0.1
     damping_intensity: 15.0
-    publish_interface_values: true
+    publish_interface_values: false
     zero_threshold: 0.0025
 ```
