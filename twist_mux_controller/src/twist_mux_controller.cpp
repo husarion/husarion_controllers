@@ -26,26 +26,30 @@
 namespace twist_mux_controller
 {
 
-TwistMuxController::TwistMuxController()
-: controller_interface::ChainableControllerInterface()
-{
-}
+TwistMuxController::TwistMuxController() : controller_interface::ChainableControllerInterface() {}
 
-controller_interface::InterfaceConfiguration
-TwistMuxController::command_interface_configuration() const
+controller_interface::InterfaceConfiguration TwistMuxController::command_interface_configuration()
+  const
 {
   controller_interface::InterfaceConfiguration command_interfaces_config;
   command_interfaces_config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
 
-  command_interfaces_config.names.reserve(2);
-  command_interfaces_config.names.push_back(params_.command_interface_linear);
-  command_interfaces_config.names.push_back(params_.command_interface_angular);
+  if (params_.holonomic) {
+    command_interfaces_config.names.reserve(3);
+    command_interfaces_config.names.push_back(params_.command_interface_linear_x);
+    command_interfaces_config.names.push_back(params_.command_interface_linear_y);
+    command_interfaces_config.names.push_back(params_.command_interface_angular_z);
+  } else {
+    command_interfaces_config.names.reserve(2);
+    command_interfaces_config.names.push_back(params_.command_interface_linear_x);
+    command_interfaces_config.names.push_back(params_.command_interface_angular_z);
+  }
 
   return command_interfaces_config;
 }
 
-controller_interface::InterfaceConfiguration
-TwistMuxController::state_interface_configuration() const
+controller_interface::InterfaceConfiguration TwistMuxController::state_interface_configuration()
+  const
 {
   std::vector<std::string> conf_names;
   return {controller_interface::interface_configuration_type::INDIVIDUAL, conf_names};
@@ -55,7 +59,6 @@ controller_interface::return_type TwistMuxController::update_reference_from_subs
   const rclcpp::Time & time, const rclcpp::Duration &)
 {
   std::string source = kSourceNotPublished;
-  auto logger = get_node()->get_logger();
 
   TwistStampedMsg::SharedPtr command_msg_ptr = nullptr;
 
@@ -70,20 +73,7 @@ controller_interface::return_type TwistMuxController::update_reference_from_subs
     }
   }
 
-  // No command message received or timeout was reached
-  if (command_msg_ptr == nullptr) {
-    reference_interfaces_[0] = 0.0;
-    reference_interfaces_[1] = 0.0;
-  } else if (
-    std::isfinite(command_msg_ptr->twist.linear.x) &&
-    std::isfinite(command_msg_ptr->twist.angular.z)) {
-    reference_interfaces_[0] = command_msg_ptr->twist.linear.x;
-    reference_interfaces_[1] = command_msg_ptr->twist.angular.z;
-  } else {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger, *get_node()->get_clock(), 1000,
-      "Command message contains NaNs. Not updating reference interfaces.");
-  }
+  update_reference_interfaces(command_msg_ptr);
 
   // Publish the source of the cmd_vel
   if (cmd_vel_source_ != source && realtime_cmd_vel_source_publisher_->trylock()) {
@@ -98,13 +88,18 @@ controller_interface::return_type TwistMuxController::update_reference_from_subs
 controller_interface::return_type TwistMuxController::update_and_write_commands(
   const rclcpp::Time &, const rclcpp::Duration &)
 {
-  double linear_command = reference_interfaces_[0];
-  double angular_command = reference_interfaces_[1];
+  auto result = std::vector<bool>();
 
-  const auto linear_result = command_interfaces_[0].set_value(linear_command);
-  const auto angular_result = command_interfaces_[1].set_value(angular_command);
+  if (params_.holonomic) {
+    result.push_back(command_interfaces_[0].set_value(reference_interfaces_[0]));
+    result.push_back(command_interfaces_[1].set_value(reference_interfaces_[1]));
+    result.push_back(command_interfaces_[2].set_value(reference_interfaces_[2]));
+  } else {
+    result.push_back(command_interfaces_[0].set_value(reference_interfaces_[0]));
+    result.push_back(command_interfaces_[1].set_value(reference_interfaces_[1]));
+  }
 
-  if (!linear_result || !angular_result) {
+  if (!std::all_of(result.begin(), result.end(), [](bool success) { return success; })) {
     RCLCPP_ERROR(
       get_node()->get_logger(), "Unable to set the command to one of the command handles!");
     return controller_interface::return_type::ERROR;
@@ -144,7 +139,8 @@ controller_interface::CallbackReturn TwistMuxController::on_init()
 controller_interface::CallbackReturn TwistMuxController::on_configure(
   const rclcpp_lifecycle::State &)
 {
-  reference_interfaces_.resize(kReferenceInterfacesSize, std::numeric_limits<double>::quiet_NaN());
+  const auto reference_interfaces_size = params_.holonomic ? 3 : 2;
+  reference_interfaces_.resize(reference_interfaces_size, std::numeric_limits<double>::quiet_NaN());
 
   rcl_interfaces::msg::ListParametersResult list = get_node()->list_parameters(
     {"cmd_vel_inputs"}, 10);
@@ -188,14 +184,12 @@ controller_interface::CallbackReturn TwistMuxController::on_deactivate(
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-controller_interface::CallbackReturn TwistMuxController::on_cleanup(
-  const rclcpp_lifecycle::State &)
+controller_interface::CallbackReturn TwistMuxController::on_cleanup(const rclcpp_lifecycle::State &)
 {
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-controller_interface::CallbackReturn TwistMuxController::on_error(
-  const rclcpp_lifecycle::State &)
+controller_interface::CallbackReturn TwistMuxController::on_error(const rclcpp_lifecycle::State &)
 {
   return controller_interface::CallbackReturn::SUCCESS;
 }
@@ -206,14 +200,54 @@ TwistMuxController::on_export_reference_interfaces()
   std::vector<hardware_interface::CommandInterface> reference_interfaces;
   reference_interfaces.reserve(reference_interfaces_.size());
 
-  reference_interfaces.push_back(hardware_interface::CommandInterface(
-    get_node()->get_name() + std::string("/linear"), hardware_interface::HW_IF_VELOCITY,
-    &reference_interfaces_[0]));
-  reference_interfaces.push_back(hardware_interface::CommandInterface(
-    get_node()->get_name() + std::string("/angular"), hardware_interface::HW_IF_VELOCITY,
-    &reference_interfaces_[1]));
+  if (params_.holonomic) {
+    reference_interfaces.push_back(hardware_interface::CommandInterface(
+      get_node()->get_name() + std::string("/linear/x"), hardware_interface::HW_IF_VELOCITY,
+      &reference_interfaces_[0]));
+    reference_interfaces.push_back(hardware_interface::CommandInterface(
+      get_node()->get_name() + std::string("/linear/y"), hardware_interface::HW_IF_VELOCITY,
+      &reference_interfaces_[1]));
+    reference_interfaces.push_back(hardware_interface::CommandInterface(
+      get_node()->get_name() + std::string("/angular/z"), hardware_interface::HW_IF_VELOCITY,
+      &reference_interfaces_[2]));
+  } else {
+    reference_interfaces.push_back(hardware_interface::CommandInterface(
+      get_node()->get_name() + std::string("/linear/x"), hardware_interface::HW_IF_VELOCITY,
+      &reference_interfaces_[0]));
+    reference_interfaces.push_back(hardware_interface::CommandInterface(
+      get_node()->get_name() + std::string("/angular/z"), hardware_interface::HW_IF_VELOCITY,
+      &reference_interfaces_[1]));
+  }
 
   return reference_interfaces;
+}
+
+void TwistMuxController::update_reference_interfaces(
+  const TwistStampedMsg::SharedPtr & command_msg_ptr)
+{
+  if (command_msg_ptr == nullptr) {
+    std::fill(reference_interfaces_.begin(), reference_interfaces_.end(), 0.0);
+    return;
+  }
+
+  auto commands = std::vector<double>();
+  if (params_.holonomic) {
+    commands = {
+      command_msg_ptr->twist.linear.x, command_msg_ptr->twist.linear.y,
+      command_msg_ptr->twist.angular.z};
+  } else {
+    commands = {command_msg_ptr->twist.linear.x, command_msg_ptr->twist.angular.z};
+  }
+
+  if (std::any_of(
+        commands.begin(), commands.end(), [](double value) { return !std::isfinite(value); })) {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      get_node()->get_logger(), *get_node()->get_clock(), 1000,
+      "Command message contains NaNs. Not updating reference interfaces.");
+    return;
+  }
+
+  std::copy(commands.begin(), commands.end(), reference_interfaces_.begin());
 }
 
 std::string TwistMuxController::get_source_from_prefix(const std::string & prefix) const
@@ -231,5 +265,4 @@ std::string TwistMuxController::get_source_from_prefix(const std::string & prefi
 #include "class_loader/register_macro.hpp"
 
 CLASS_LOADER_REGISTER_CLASS(
-  twist_mux_controller::TwistMuxController,
-  controller_interface::ChainableControllerInterface)
+  twist_mux_controller::TwistMuxController, controller_interface::ChainableControllerInterface)

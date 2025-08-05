@@ -77,6 +77,7 @@ public:
   }
 
 protected:
+  void update_reference_interfaces(const TwistStampedMsg::SharedPtr & command_msg_ptr);
   std::vector<hardware_interface::CommandInterface> on_export_reference_interfaces() override;
 
   std::string get_source_from_prefix(const std::string & prefix) const;
