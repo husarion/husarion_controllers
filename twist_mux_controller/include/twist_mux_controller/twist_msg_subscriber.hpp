@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VELOCITY_INPUT_CONTROLLER_VELOCITY_COMMAND_SUBSCRIBER
-#define VELOCITY_INPUT_CONTROLLER_VELOCITY_COMMAND_SUBSCRIBER
+#ifndef TWIST_MUX_CONTROLLER_TWIST_MSG_SUBSCRIBER
+#define TWIST_MUX_CONTROLLER_TWIST_MSG_SUBSCRIBER
 
 #include <chrono>
 #include <functional>
@@ -26,15 +26,15 @@
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
 
-namespace velocity_input_controller
+namespace twist_mux_controller
 {
 
 using TwistStampedMsg = geometry_msgs::msg::TwistStamped;
 
-class VelocityCommandSubscriber
+class TwistMsgSubscriber
 {
 public:
-  VelocityCommandSubscriber(
+  TwistMsgSubscriber(
     rclcpp_lifecycle::LifecycleNode::SharedPtr node, const std::string & topic_name,
     const std::string & source_type, const float timeout = 0.5, const std::uint8_t priority = 0)
   : node_(std::move(node)),
@@ -43,16 +43,15 @@ public:
     priority_(priority)
   {
     if (auto node = node_.lock()) {
-      velocity_command_subscriber_ = node->create_subscription<TwistStampedMsg>(
+      subscriber_ = node->create_subscription<TwistStampedMsg>(
         topic_name, rclcpp::SystemDefaultsQoS(),
-        std::bind(
-          &VelocityCommandSubscriber::velocity_command_callback, this, std::placeholders::_1));
+        std::bind(&TwistMsgSubscriber::velocity_command_callback, this, std::placeholders::_1));
     }
   }
 
   bool timeout(const rclcpp::Time & time)
   {
-    const auto msg_ptr = received_velocity_msg_ptr_.readFromRT()->get();
+    const auto msg_ptr = received_msg_ptr_.readFromRT()->get();
 
     if (msg_ptr == nullptr) {
       return true;
@@ -61,10 +60,7 @@ public:
     return (time - msg_ptr->header.stamp) >= cmd_vel_timeout_;
   }
 
-  TwistStampedMsg::SharedPtr get_velocity_command()
-  {
-    return *(received_velocity_msg_ptr_.readFromRT());
-  }
+  TwistStampedMsg::SharedPtr get_velocity_command() { return *(received_msg_ptr_.readFromRT()); }
 
   std::string get_source_type() const { return source_type_; }
 
@@ -96,7 +92,7 @@ protected:
         return;
       }
 
-      received_velocity_msg_ptr_.writeFromNonRT(msg);
+      received_msg_ptr_.writeFromNonRT(msg);
     }
   }
 
@@ -106,10 +102,10 @@ protected:
   const rclcpp::Duration cmd_vel_timeout_;
   const std::uint8_t priority_;
 
-  rclcpp::Subscription<TwistStampedMsg>::SharedPtr velocity_command_subscriber_;
-  realtime_tools::RealtimeBuffer<TwistStampedMsg::SharedPtr> received_velocity_msg_ptr_{nullptr};
+  rclcpp::Subscription<TwistStampedMsg>::SharedPtr subscriber_;
+  realtime_tools::RealtimeBuffer<TwistStampedMsg::SharedPtr> received_msg_ptr_{nullptr};
 };
 
-}  // namespace velocity_input_controller
+}  // namespace twist_mux_controller
 
-#endif  // VELOCITY_INPUT_CONTROLLER_VELOCITY_COMMAND_SUBSCRIBER
+#endif  // TWIST_MUX_CONTROLLER_TWIST_MSG_SUBSCRIBER

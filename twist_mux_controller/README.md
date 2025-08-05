@@ -1,11 +1,11 @@
 
-# Velocity Input Controller
+# Twist Mux Controller
 
-The `VelocityInputController` is a ROS 2 chainable controller designed to process velocity commands from multiple sources and forward them to hardware interfaces or other chainable controllers.
+The `TwistMuxController` is a ROS 2 chainable controller designed to process velocity commands from multiple sources and forward them to hardware interfaces or other chainable controllers.
 
 ## Publishers
 
-- `{cmd_vel_topic}/source` [*std_msgs/msg/String*]: Publishes the source of the active velocity command.
+- `{cmd_vel_topic}/source` [*std_msgs/msg/String*]: Publishes the source of the active velocity command. The source name corresponds to the key names in the `cmd_vel_inputs` parameter.
 
 ## Subscribers
 
@@ -14,7 +14,7 @@ The `VelocityInputController` is a ROS 2 chainable controller designed to proces
 
 ## Parameters
 
-- `cmd_vel_inputs` [*dict*, default: **{}**]: List of command velocity inputs. Each key in the dictionary has the following parameters:
+- `cmd_vel_inputs` [*dict*, default: **{}**]: List of command velocity inputs. Each key in the dictionary has a unique name and the following parameters:
   - `topic` [*string*, default: **{source_name}/cmd_vel**]: Name of the topic to subscribe to.
   - `timeout` [*double*, default: **0.5**]: Timeout for command velocity topic in seconds.
   - `priority` [*uint*, default: **0**]: The priority of the input in range [0, 255], where 0 is the lowest priority and 255 is the highest. Note, if there are multiple inputs with the same priority, the output will be chosen arbitrary.
@@ -31,7 +31,7 @@ The `VelocityInputController` is a ROS 2 chainable controller designed to proces
 ## Example Usage
 
 ```yaml
-  velocity_input_controller:
+  twist_mux_controller:
     ros__parameters:
       cmd_vel_inputs:
         manual:

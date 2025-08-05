@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VELOCITY_INPUT_CONTROLLER_VELOCITY_INPUT_CONTROLLER
-#define VELOCITY_INPUT_CONTROLLER_VELOCITY_INPUT_CONTROLLER
+#ifndef TWIST_MUX_CONTROLLER_TWIST_MUX_CONTROLLER
+#define TWIST_MUX_CONTROLLER_TWIST_MUX_CONTROLLER
 
 #include <memory>
 #include <vector>
@@ -26,19 +26,19 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <std_msgs/msg/string.hpp>
 
-#include "velocity_input_controller/velocity_command_subscriber.hpp"
-#include "velocity_input_controller/velocity_input_controller_parameters.hpp"
+#include "twist_mux_controller/twist_mux_controller_parameters.hpp"
+#include "twist_mux_controller/twist_msg_subscriber.hpp"
 
-namespace velocity_input_controller
+namespace twist_mux_controller
 {
 
 using StringMsg = std_msgs::msg::String;
 using TwistStampedMsg = geometry_msgs::msg::TwistStamped;
 
-class VelocityInputController : public controller_interface::ChainableControllerInterface
+class TwistMuxController : public controller_interface::ChainableControllerInterface
 {
 public:
-  VelocityInputController();
+  TwistMuxController();
 
   controller_interface::InterfaceConfiguration command_interface_configuration() const override;
 
@@ -88,7 +88,7 @@ protected:
 
   std::string cmd_vel_source_;
 
-  std::vector<std::shared_ptr<VelocityCommandSubscriber>> cmd_vel_subscribers_;
+  std::vector<std::shared_ptr<TwistMsgSubscriber>> cmd_vel_subscribers_;
   rclcpp::Publisher<StringMsg>::SharedPtr cmd_vel_source_publisher_;
   realtime_tools::RealtimePublisher<StringMsg>::SharedPtr realtime_cmd_vel_source_publisher_;
 
@@ -96,6 +96,6 @@ private:
   static constexpr uint kReferenceInterfacesSize = 2;
 };
 
-}  // namespace velocity_input_controller
+}  // namespace twist_mux_controller
 
-#endif  // VELOCITY_INPUT_CONTROLLER_VELOCITY_INPUT_CONTROLLER
+#endif  // TWIST_MUX_CONTROLLER_TWIST_MUX_CONTROLLER

@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>velocity_input_controller</name>
+  <name>twist_mux_controller</name>
   <version>0.0.1</version>
-  <description>Controller for managing command velocity inputs</description>
+  <description>Controller for managing multiple twist inputs</description>
   <maintainer email="support@husarion.com">Husarion</maintainer>
   <license>Apache License 2.0</license>
 

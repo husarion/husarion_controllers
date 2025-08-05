@@ -1,6 +1,6 @@
-<library path="velocity_input_controller">
-  <class name="velocity_input_controller/VelocityInputController"
-    type="velocity_input_controller::VelocityInputController"
+<library path="twist_mux_controller">
+  <class name="twist_mux_controller/TwistMuxController"
+    type="twist_mux_controller::TwistMuxController"
     base_class_type="controller_interface::ChainableControllerInterface">
     <description>
       Transform velocity msg into ros2_control commands.

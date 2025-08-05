@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "velocity_input_controller/velocity_input_controller.hpp"
+#include "twist_mux_controller/twist_mux_controller.hpp"
 
 #include <cmath>
 #include <memory>
@@ -23,16 +23,16 @@
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-namespace velocity_input_controller
+namespace twist_mux_controller
 {
 
-VelocityInputController::VelocityInputController()
+TwistMuxController::TwistMuxController()
 : controller_interface::ChainableControllerInterface()
 {
 }
 
 controller_interface::InterfaceConfiguration
-VelocityInputController::command_interface_configuration() const
+TwistMuxController::command_interface_configuration() const
 {
   controller_interface::InterfaceConfiguration command_interfaces_config;
   command_interfaces_config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
@@ -45,13 +45,13 @@ VelocityInputController::command_interface_configuration() const
 }
 
 controller_interface::InterfaceConfiguration
-VelocityInputController::state_interface_configuration() const
+TwistMuxController::state_interface_configuration() const
 {
   std::vector<std::string> conf_names;
   return {controller_interface::interface_configuration_type::INDIVIDUAL, conf_names};
 }
 
-controller_interface::return_type VelocityInputController::update_reference_from_subscribers(
+controller_interface::return_type TwistMuxController::update_reference_from_subscribers(
   const rclcpp::Time & time, const rclcpp::Duration &)
 {
   std::string source = kSourceNotPublished;
@@ -95,7 +95,7 @@ controller_interface::return_type VelocityInputController::update_reference_from
   return controller_interface::return_type::OK;
 }
 
-controller_interface::return_type VelocityInputController::update_and_write_commands(
+controller_interface::return_type TwistMuxController::update_and_write_commands(
   const rclcpp::Time &, const rclcpp::Duration &)
 {
   double linear_command = reference_interfaces_[0];
@@ -113,7 +113,7 @@ controller_interface::return_type VelocityInputController::update_and_write_comm
   return controller_interface::return_type::OK;
 }
 
-controller_interface::CallbackReturn VelocityInputController::on_init()
+controller_interface::CallbackReturn TwistMuxController::on_init()
 {
   try {
     param_listener_ = std::make_shared<ParamListener>(get_node());
@@ -141,7 +141,7 @@ controller_interface::CallbackReturn VelocityInputController::on_init()
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-controller_interface::CallbackReturn VelocityInputController::on_configure(
+controller_interface::CallbackReturn TwistMuxController::on_configure(
   const rclcpp_lifecycle::State &)
 {
   reference_interfaces_.resize(kReferenceInterfacesSize, std::numeric_limits<double>::quiet_NaN());
@@ -164,7 +164,7 @@ controller_interface::CallbackReturn VelocityInputController::on_configure(
 
     // TODO: Add a check if there are no multiple inputs with the same priority
 
-    cmd_vel_subscribers_.push_back(std::make_shared<VelocityCommandSubscriber>(
+    cmd_vel_subscribers_.push_back(std::make_shared<TwistMsgSubscriber>(
       this->get_node(), topic, get_source_from_prefix(prefix), timeout, priority));
   }
 
@@ -176,32 +176,32 @@ controller_interface::CallbackReturn VelocityInputController::on_configure(
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-controller_interface::CallbackReturn VelocityInputController::on_activate(
+controller_interface::CallbackReturn TwistMuxController::on_activate(
   const rclcpp_lifecycle::State &)
 {
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-controller_interface::CallbackReturn VelocityInputController::on_deactivate(
+controller_interface::CallbackReturn TwistMuxController::on_deactivate(
   const rclcpp_lifecycle::State &)
 {
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-controller_interface::CallbackReturn VelocityInputController::on_cleanup(
+controller_interface::CallbackReturn TwistMuxController::on_cleanup(
   const rclcpp_lifecycle::State &)
 {
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
-controller_interface::CallbackReturn VelocityInputController::on_error(
+controller_interface::CallbackReturn TwistMuxController::on_error(
   const rclcpp_lifecycle::State &)
 {
   return controller_interface::CallbackReturn::SUCCESS;
 }
 
 std::vector<hardware_interface::CommandInterface>
-VelocityInputController::on_export_reference_interfaces()
+TwistMuxController::on_export_reference_interfaces()
 {
   std::vector<hardware_interface::CommandInterface> reference_interfaces;
   reference_interfaces.reserve(reference_interfaces_.size());
@@ -216,7 +216,7 @@ VelocityInputController::on_export_reference_interfaces()
   return reference_interfaces;
 }
 
-std::string VelocityInputController::get_source_from_prefix(const std::string & prefix) const
+std::string TwistMuxController::get_source_from_prefix(const std::string & prefix) const
 {
   auto pos = prefix.rfind('.');
   if (pos != std::string::npos) {
@@ -226,10 +226,10 @@ std::string VelocityInputController::get_source_from_prefix(const std::string & 
   return prefix;
 }
 
-}  // namespace velocity_input_controller
+}  // namespace twist_mux_controller
 
 #include "class_loader/register_macro.hpp"
 
 CLASS_LOADER_REGISTER_CLASS(
-  velocity_input_controller::VelocityInputController,
+  twist_mux_controller::TwistMuxController,
   controller_interface::ChainableControllerInterface)

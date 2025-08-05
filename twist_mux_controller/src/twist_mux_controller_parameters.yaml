@@ -1,4 +1,4 @@
-velocity_input_controller:
+twist_mux_controller:
   cmd_vel_inputs:
     {
       type: none,
