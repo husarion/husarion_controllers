@@ -1,0 +1,39 @@
+low_pass_filter:
+  state_interface_prefix: {
+    type: string,
+    default_value: "",
+    description: "Prefix to be prepended to the state interface names.",
+  }
+  state_interface_names: {
+    type: string_array,
+    default_value: [],
+    description: "Names of state interfaces to be filtered.",
+    validation: {
+      not_empty<>: []
+    }
+  }
+  sampling_frequency: {
+    type: double,
+    default_value: 100.0,
+    description: "Filter sampling frequency in Hz.",
+  }
+  damping_frequency: {
+    type: double,
+    default_value: 0.1,
+    description: "Filter damping frequency in Hz.",
+  }
+  damping_intensity: {
+    type: double,
+    default_value: 0.707,
+    description: "Defines how sharp the filter is. 0.707 is the default value for a Butterworth filter.",
+  }
+  publish_interface_values: {
+    type: bool,
+    default_value: false,
+    description: "If true, the state interface values will be published to a topic.",
+  }
+  zero_threshold: {
+    type: double,
+    default_value: 0.0,
+    description: "If the filtered value is below this threshold, it will be set to zero.",
+  }
