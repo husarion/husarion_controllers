@@ -46,6 +46,11 @@ public:
       subscriber_ = node->create_subscription<TwistStampedMsg>(
         topic_name, rclcpp::SystemDefaultsQoS(),
         std::bind(&TwistMsgSubscriber::velocity_command_callback, this, std::placeholders::_1));
+
+      RCLCPP_INFO(
+        node->get_logger(),
+        "Created subscriber for topic '%s' with source type '%s' and priority %d",
+        topic_name.c_str(), source_type_.c_str(), priority_);
     }
   }
 
@@ -73,8 +78,9 @@ protected:
       if ((msg->header.stamp.sec == 0) && (msg->header.stamp.nanosec == 0)) {
         RCLCPP_WARN_ONCE(
           node->get_logger(),
-          "Received TwistStamped with zero timestamp, setting it to current "
-          "time, this message will only be shown once");
+          "Received TwistStamped with zero timestamp for topic '%s', setting it to current "
+          "time, this message will only be shown once",
+          subscriber_->get_topic_name());
         msg->header.stamp = node->now();
       }
 
@@ -84,10 +90,10 @@ protected:
         if (current_time_diff >= cmd_vel_timeout_) {
           RCLCPP_WARN(
             node->get_logger(),
-            "Ignoring the received message (timestamp %.10f) because it is older than "
-            "the current time by %.10f seconds, which exceeds the allowed timeout (%.4f)",
-            rclcpp::Time(msg->header.stamp).seconds(), current_time_diff.seconds(),
-            cmd_vel_timeout_.seconds());
+            "Ignoring the received message for topic '%s' (timestamp %.10f) because it is older "
+            "than the current time by %.10f seconds, which exceeds the allowed timeout (%.4f)",
+            subscriber_->get_topic_name(), rclcpp::Time(msg->header.stamp).seconds(),
+            current_time_diff.seconds(), cmd_vel_timeout_.seconds());
           return;
         }
 
@@ -97,10 +103,10 @@ protected:
         if (current_time_diff <= rclcpp::Duration::from_seconds(-cmd_vel_timeout_.seconds())) {
           RCLCPP_WARN(
             node->get_logger(),
-            "Ignoring the received message (timestamp %.10f) because it is in the future by "
-            "%.10f seconds, which exceeds the allowed timeout (%.4f)",
-            rclcpp::Time(msg->header.stamp).seconds(), -current_time_diff.seconds(),
-            cmd_vel_timeout_.seconds());
+            "Ignoring the received message for topic '%s' (timestamp %.10f) because it is in the "
+            "future by %.10f seconds, which exceeds the allowed timeout (%.4f)",
+            subscriber_->get_topic_name(), rclcpp::Time(msg->header.stamp).seconds(),
+            -current_time_diff.seconds(), cmd_vel_timeout_.seconds());
           return;
         }
       }
