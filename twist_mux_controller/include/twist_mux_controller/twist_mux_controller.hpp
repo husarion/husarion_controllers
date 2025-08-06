@@ -26,8 +26,8 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <std_msgs/msg/string.hpp>
 
-#include "twist_mux_controller/twist_mux_controller_parameters.hpp"
 #include "twist_mux_controller/twist_msg_subscriber.hpp"
+#include "twist_mux_controller/twist_mux_controller_parameters.hpp"
 
 namespace twist_mux_controller
 {
