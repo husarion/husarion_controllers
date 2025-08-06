@@ -20,7 +20,7 @@ low_pass_filter:
   damping_frequency: {
     type: double,
     default_value: 0.1,
-    description: "Filter damping frequency in Hz (Is it?).",
+    description: "Filter damping frequency in Hz.",
   }
   damping_intensity: {
     type: double,

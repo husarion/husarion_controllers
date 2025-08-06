@@ -80,16 +80,29 @@ protected:
 
       const auto current_time_diff = node->now() - msg->header.stamp;
 
-      if (
-        cmd_vel_timeout_ != rclcpp::Duration::from_seconds(0.0) &&
-        current_time_diff >= cmd_vel_timeout_) {
-        RCLCPP_WARN(
-          node->get_logger(),
-          "Ignoring the received message (timestamp %.10f) because it is older than "
-          "the current time by %.10f seconds, which exceeds the allowed timeout (%.4f)",
-          rclcpp::Time(msg->header.stamp).seconds(), current_time_diff.seconds(),
-          cmd_vel_timeout_.seconds());
-        return;
+      if (cmd_vel_timeout_ != rclcpp::Duration::from_seconds(0.0)) {
+        if (current_time_diff >= cmd_vel_timeout_) {
+          RCLCPP_WARN(
+            node->get_logger(),
+            "Ignoring the received message (timestamp %.10f) because it is older than "
+            "the current time by %.10f seconds, which exceeds the allowed timeout (%.4f)",
+            rclcpp::Time(msg->header.stamp).seconds(), current_time_diff.seconds(),
+            cmd_vel_timeout_.seconds());
+          return;
+        }
+
+        // In case systems are slightly out of sync, we can receive messages with a timestamp
+        // in the future. They would still be valid as the negative value would be very small,
+        // that's why we use a negative timeout check.
+        if (current_time_diff <= rclcpp::Duration::from_seconds(-cmd_vel_timeout_.seconds())) {
+          RCLCPP_WARN(
+            node->get_logger(),
+            "Ignoring the received message (timestamp %.10f) because it is in the future by "
+            "%.10f seconds, which exceeds the allowed timeout (%.4f)",
+            rclcpp::Time(msg->header.stamp).seconds(), -current_time_diff.seconds(),
+            cmd_vel_timeout_.seconds());
+          return;
+        }
       }
 
       received_msg_ptr_.writeFromNonRT(msg);

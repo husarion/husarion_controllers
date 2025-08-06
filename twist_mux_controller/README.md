@@ -5,12 +5,11 @@ The `TwistMuxController` is a ROS 2 chainable controller designed to process vel
 
 ## Publishers
 
-- `{cmd_vel_topic}/source` [*std_msgs/msg/String*]: Publishes the source of the active velocity command. The source name corresponds to the key names in the `cmd_vel_inputs` parameter.
+- `~/source` [*std_msgs/msg/String*]: Publishes the source of the active velocity command. The source name corresponds to the key names in the `cmd_vel_inputs` parameter.
 
 ## Subscribers
 
-- `{cmd_vel_topic}` [geometry_msgs/msg/TwistStamped]: The base topic for command velocity, depends on `cmd_vel_topic` parameter.
-- `{cmd_vel_topic}/{name}` [geometry_msgs/msg/TwistStamped]: For each input in `cmd_vel_inputs` parameter, controller will create subscriber to that command velocity.
+- `{cmd_vel_inputs.source_key.topic}` [geometry_msgs/msg/TwistStamped]: For each input in `cmd_vel_inputs` parameter, controller will create subscriber to that command velocity. The topic name depends on the `topic` parameter. See [Example usage](#example-usage) for example topics.
 
 ## Parameters
 
@@ -20,7 +19,7 @@ The `TwistMuxController` is a ROS 2 chainable controller designed to process vel
   - `timeout` [*double*, default: **0.5**]: Timeout for command velocity topic in seconds.
   - `priority` [*uint*, default: **0**]: The priority of the input in range [0, 255], where 0 is the lowest priority and 255 is the highest. Note, if there are multiple inputs with the same priority, the output will be chosen arbitrary.
 - `command_interface_linear_x` [*string*, default: **linear/x/velocity**]: Command interface for linear X velocity.
-- `command_interface_linear_z` [*string*, default: **linear/y/velocity**]: Command interface for linear Y velocity. Available only if `holonomic` parameter is set to `true`.
+- `command_interface_linear_y` [*string*, default: **linear/y/velocity**]: Command interface for linear Y velocity. Available only if `holonomic` parameter is set to `true`.
 - `command_interface_angular_z` [*string*, default: **angular/z/velocity**]: Command interface for angular velocity.
 
 ## Interfaces
@@ -32,6 +31,8 @@ The `TwistMuxController` is a ROS 2 chainable controller designed to process vel
 - `{node_name}/angular/z/velocity`: Angular Velocity
 
 ## Example Usage
+
+Controller configuration:
 
 ```yaml
   twist_mux_controller:
@@ -53,3 +54,9 @@ The `TwistMuxController` is a ROS 2 chainable controller designed to process vel
       command_interface_linear_x: drive_controller/linear/velocity
       command_interface_angular_z: drive_controller/angular/velocity
 ```
+
+Above configuration will create subscribers for the following topics:
+
+- `/manual/cmd_vel`
+- `/autonomous/cmd_vel`
+- `/cmd_vel`

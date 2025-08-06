@@ -12,9 +12,9 @@ set(PACKAGE_DEPENDENCIES
     generate_parameter_library
     hardware_interface
     pluginlib
-    realtime_tools
     rclcpp
-    rclcpp_lifecycle)
+    rclcpp_lifecycle
+    realtime_tools)
 
 foreach(PACKAGE IN ITEMS ${PACKAGE_DEPENDENCIES})
   find_package(${PACKAGE} REQUIRED)
