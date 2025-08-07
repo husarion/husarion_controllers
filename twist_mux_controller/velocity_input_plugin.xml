@@ -1,0 +1,9 @@
+<library path="twist_mux_controller">
+  <class name="twist_mux_controller/TwistMuxController"
+    type="twist_mux_controller::TwistMuxController"
+    base_class_type="controller_interface::ChainableControllerInterface">
+    <description>
+      Transform velocity msg into ros2_control commands.
+    </description>
+  </class>
+</library>
