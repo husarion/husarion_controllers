@@ -372,7 +372,7 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
   params_.position_feedback = params_.position_feedback;
   params_.enable_odom_tf = params_.enable_odom_tf;
 
-  cmd_vel_timeout_ = std::chrono::milliseconds{static_cast<int>(params_.cmd_vel_timeout * 1000.0)};
+  cmd_vel_timeout_ = rclcpp::Duration::from_seconds(params_.cmd_vel_timeout);
   publish_limited_velocity_ = params_.publish_limited_velocity;
 
   // START DEPRECATED
