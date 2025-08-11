@@ -21,22 +21,21 @@
 // Based on: https://ecam-eurobot.github.io/Tutorials/mechanical/mecanum.html
 // Author: Maciej Stępień
 
+#include "mecanum_drive_controller/mecanum_drive_controller.hpp"
+
 #include <memory>
-#include <queue>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "hardware_interface/types/hardware_interface_type_values.hpp"
-#include "lifecycle_msgs/msg/state.hpp"
-#include "mecanum_drive_controller/mecanum_drive_controller.hpp"
-#include "rclcpp/logging.hpp"
-#include "tf2/LinearMath/Quaternion.h"
+#include <hardware_interface/types/hardware_interface_type_values.hpp>
+#include <lifecycle_msgs/msg/state.hpp>
+#include <rclcpp/logging.hpp>
+#include <tf2/LinearMath/Quaternion.hpp>
 
 namespace
 {
 constexpr auto DEFAULT_COMMAND_TOPIC = "~/cmd_vel";
-constexpr auto DEFAULT_COMMAND_UNSTAMPED_TOPIC = "~/cmd_vel_unstamped";
 constexpr auto DEFAULT_COMMAND_OUT_TOPIC = "~/cmd_vel_out";
 constexpr auto DEFAULT_ODOMETRY_TOPIC = "~/odom";
 constexpr auto DEFAULT_TRANSFORM_TOPIC = "/tf";
@@ -51,7 +50,10 @@ using hardware_interface::HW_IF_POSITION;
 using hardware_interface::HW_IF_VELOCITY;
 using lifecycle_msgs::msg::State;
 
-MecanumDriveController::MecanumDriveController() : controller_interface::ControllerInterface() {}
+MecanumDriveController::MecanumDriveController()
+: controller_interface::ChainableControllerInterface()
+{
+}
 
 const char * MecanumDriveController::feedback_type() const
 {
@@ -92,8 +94,8 @@ InterfaceConfiguration MecanumDriveController::state_interface_configuration() c
   return {interface_configuration_type::INDIVIDUAL, conf_names};
 }
 
-controller_interface::return_type MecanumDriveController::update(
-  const rclcpp::Time & time, const rclcpp::Duration & period)
+controller_interface::return_type MecanumDriveController::update_reference_from_subscribers(
+  const rclcpp::Time & time, const rclcpp::Duration & /*period*/)
 {
   auto logger = get_node()->get_logger();
   if (get_lifecycle_state().id() == State::PRIMARY_STATE_INACTIVE) {
@@ -114,17 +116,40 @@ controller_interface::return_type MecanumDriveController::update(
   const auto age_of_last_command = time - last_command_msg->header.stamp;
   // Brake if cmd_vel has timeout, override the stored command
   if (age_of_last_command > cmd_vel_timeout_) {
-    last_command_msg->twist.linear.x = 0.0;
-    last_command_msg->twist.linear.y = 0.0;
-    last_command_msg->twist.angular.z = 0.0;
+    reference_interfaces_[0] = 0.0;
+    reference_interfaces_[1] = 0.0;
+    reference_interfaces_[2] = 0.0;
+  } else if (
+    std::isfinite(last_command_msg->twist.linear.x) &&
+    std::isfinite(last_command_msg->twist.linear.y) &&
+    std::isfinite(last_command_msg->twist.angular.z)) {
+    reference_interfaces_[0] = last_command_msg->twist.linear.x;
+    reference_interfaces_[1] = last_command_msg->twist.linear.y;
+    reference_interfaces_[2] = last_command_msg->twist.angular.z;
+  } else {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger, *get_node()->get_clock(), 1000,
+      "Command message contains NaNs. Not updating reference interfaces.");
   }
 
-  // command may be limited further by SpeedLimit,
-  // without affecting the stored twist command
-  TwistStamped command = *last_command_msg;
-  double & linear_command_x = command.twist.linear.x;
-  double & linear_command_y = command.twist.linear.y;
-  double & angular_command = command.twist.angular.z;
+  return controller_interface::return_type::OK;
+}
+
+controller_interface::return_type MecanumDriveController::update_and_write_commands(
+  const rclcpp::Time & time, const rclcpp::Duration & period)
+{
+  auto logger = get_node()->get_logger();
+
+  double & linear_command_x = reference_interfaces_[0];
+  double & linear_command_y = reference_interfaces_[1];
+  double & angular_command = reference_interfaces_[2];
+  if (get_lifecycle_state().id() == State::PRIMARY_STATE_INACTIVE) {
+    if (!is_halted) {
+      halt();
+      is_halted = true;
+    }
+    return controller_interface::return_type::OK;
+  }
 
   previous_update_timestamp_ = time;
 
@@ -210,23 +235,32 @@ controller_interface::return_type MecanumDriveController::update(
     }
   }
 
-  auto & last_command = previous_commands_.back().twist;
-  auto & second_to_last_command = previous_commands_.front().twist;
-  limiter_linear_x_->limit(
-    linear_command_x, last_command.linear.x, second_to_last_command.linear.x, period.seconds());
-  limiter_linear_y_->limit(
-    linear_command_y, last_command.linear.y, second_to_last_command.linear.y, period.seconds());
-  limiter_angular_->limit(
-    angular_command, last_command.angular.z, second_to_last_command.angular.z, period.seconds());
+  double & last_linear_x = previous_two_commands_.back()[0];
+  double & second_to_last_linear_x = previous_two_commands_.front()[0];
+  double & last_linear_y = previous_two_commands_.back()[1];
+  double & second_to_last_linear_y = previous_two_commands_.front()[1];
+  double & last_angular = previous_two_commands_.back()[2];
+  double & second_to_last_angular = previous_two_commands_.front()[2];
 
-  previous_commands_.pop();
-  previous_commands_.emplace(command);
+  limiter_linear_x_->limit(
+    linear_command_x, last_linear_x, second_to_last_linear_x, period.seconds());
+  limiter_linear_y_->limit(
+    linear_command_y, last_linear_y, second_to_last_linear_y, period.seconds());
+  limiter_angular_->limit(angular_command, last_angular, second_to_last_angular, period.seconds());
+
+  previous_two_commands_.pop();
+  previous_two_commands_.push({linear_command_x, linear_command_y, angular_command});
 
   //    Publish limited velocity
   if (publish_limited_velocity_ && realtime_limited_velocity_publisher_->trylock()) {
     auto & limited_velocity_command = realtime_limited_velocity_publisher_->msg_;
     limited_velocity_command.header.stamp = time;
-    limited_velocity_command.twist = command.twist;
+    limited_velocity_command.twist.linear.x = linear_command_x;
+    limited_velocity_command.twist.linear.y = linear_command_y;
+    limited_velocity_command.twist.linear.z = 0.0;
+    limited_velocity_command.twist.angular.x = 0.0;
+    limited_velocity_command.twist.angular.y = 0.0;
+    limited_velocity_command.twist.angular.z = angular_command;
     realtime_limited_velocity_publisher_->unlockAndPublish();
   }
 
@@ -276,6 +310,10 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
     params_ = param_listener_->get_params();
     RCLCPP_INFO(logger, "Parameters were updated");
   }
+
+  // Allocate reference interfaces if needed
+  const int nr_ref_itfs = 3;
+  reference_interfaces_.resize(nr_ref_itfs, std::numeric_limits<double>::quiet_NaN());
 
   std::string tf_prefix;
   if (params_.tf_frame_prefix_enable) {
@@ -333,7 +371,7 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
   params_.position_feedback = params_.position_feedback;
   params_.enable_odom_tf = params_.enable_odom_tf;
 
-  cmd_vel_timeout_ = std::chrono::milliseconds{static_cast<int>(params_.cmd_vel_timeout * 1000.0)};
+  cmd_vel_timeout_ = rclcpp::Duration::from_seconds(params_.cmd_vel_timeout);
   publish_limited_velocity_ = params_.publish_limited_velocity;
 
   // START DEPRECATED
@@ -437,8 +475,8 @@ controller_interface::CallbackReturn MecanumDriveController::on_configure(
   received_velocity_msg_ptr_.writeFromNonRT(std::make_shared<TwistStamped>(empty_twist));
 
   // Fill last two commands with default constructed commands
-  previous_commands_.emplace(empty_twist);
-  previous_commands_.emplace(empty_twist);
+  previous_two_commands_.push({0.0, 0.0, 0.0});
+  previous_two_commands_.push({0.0, 0.0, 0.0});
 
   velocity_command_subscriber_ = get_node()->create_subscription<TwistStamped>(
     DEFAULT_COMMAND_TOPIC, rclcpp::SystemDefaultsQoS(),
@@ -582,8 +620,8 @@ bool MecanumDriveController::reset()
 void MecanumDriveController::reset_buffers()
 {
   // Empty out the old queue.
-  std::queue<TwistStamped> empty;
-  std::swap(previous_commands_, empty);
+  std::queue<std::array<double, 3>> empty;
+  std::swap(previous_two_commands_, empty);
 
   // Fill RealtimeBuffer with NaNs so it will contain a known value
   // but still indicate that no command has yet been sent.
@@ -653,9 +691,32 @@ controller_interface::CallbackReturn MecanumDriveController::configure_wheel(
 
   return controller_interface::CallbackReturn::SUCCESS;
 }
+
+std::vector<hardware_interface::CommandInterface>
+MecanumDriveController::on_export_reference_interfaces()
+{
+  std::vector<hardware_interface::CommandInterface> reference_interfaces;
+  reference_interfaces.reserve(reference_interfaces_.size());
+
+  reference_interfaces.push_back(hardware_interface::CommandInterface(
+    get_node()->get_name() + std::string("/linear/x"), hardware_interface::HW_IF_VELOCITY,
+    &reference_interfaces_[0]));
+
+  reference_interfaces.push_back(hardware_interface::CommandInterface(
+    get_node()->get_name() + std::string("/linear/y"), hardware_interface::HW_IF_VELOCITY,
+    &reference_interfaces_[1]));
+
+  reference_interfaces.push_back(hardware_interface::CommandInterface(
+    get_node()->get_name() + std::string("/angular/z"), hardware_interface::HW_IF_VELOCITY,
+    &reference_interfaces_[2]));
+
+  return reference_interfaces;
+}
+
 }  // namespace mecanum_drive_controller
 
 #include "class_loader/register_macro.hpp"
 
 CLASS_LOADER_REGISTER_CLASS(
-  mecanum_drive_controller::MecanumDriveController, controller_interface::ControllerInterface)
+  mecanum_drive_controller::MecanumDriveController,
+  controller_interface::ChainableControllerInterface)
