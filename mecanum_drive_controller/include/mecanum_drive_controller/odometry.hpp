@@ -27,8 +27,6 @@
 #ifndef MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_
 #define MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_
 
-#include <cmath>
-
 #include "rclcpp/time.hpp"
 #include "rcpputils/rolling_mean_accumulator.hpp"
 
