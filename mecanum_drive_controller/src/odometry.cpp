@@ -96,8 +96,7 @@ bool Odometry::updateFromVelocity(
   const rclcpp::Time & time)
 {
   const double dt = time.seconds() - timestamp_.seconds();
-  if (dt < 0.0001)
-  {
+  if (dt < 0.0001) {
     return false;  // Interval too small to integrate with
   }
   // Compute linear and angular diff:
