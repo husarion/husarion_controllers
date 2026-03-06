@@ -23,9 +23,9 @@
 
 #include <cmath>
 
-#include "mecanum_drive_controller/odometry.hpp"
+#include "husarion_mecanum_drive_controller/odometry.hpp"
 
-namespace mecanum_drive_controller
+namespace husarion_mecanum_drive_controller
 {
 Odometry::Odometry(size_t velocity_rolling_window_size)
 : timestamp_(0.0),
@@ -190,4 +190,4 @@ void Odometry::resetAccumulators()
   angular_accumulator_ = RollingMeanAccumulator(velocity_rolling_window_size_);
 }
 
-}  // namespace mecanum_drive_controller
+}  // namespace husarion_mecanum_drive_controller

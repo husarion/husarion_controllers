@@ -21,7 +21,7 @@
 // Based on: https://ecam-eurobot.github.io/Tutorials/mechanical/mecanum.html
 // Author: Maciej Stępień
 
-#include "mecanum_drive_controller/mecanum_drive_controller.hpp"
+#include "husarion_mecanum_drive_controller/mecanum_drive_controller.hpp"
 
 #include <memory>
 #include <string>
@@ -41,7 +41,7 @@ constexpr auto DEFAULT_ODOMETRY_TOPIC = "~/odom";
 constexpr auto DEFAULT_TRANSFORM_TOPIC = "/tf";
 }  // namespace
 
-namespace mecanum_drive_controller
+namespace husarion_mecanum_drive_controller
 {
 using namespace std::chrono_literals;
 using controller_interface::interface_configuration_type;
@@ -713,10 +713,10 @@ MecanumDriveController::on_export_reference_interfaces()
   return reference_interfaces;
 }
 
-}  // namespace mecanum_drive_controller
+}  // namespace husarion_mecanum_drive_controller
 
 #include "class_loader/register_macro.hpp"
 
 CLASS_LOADER_REGISTER_CLASS(
-  mecanum_drive_controller::MecanumDriveController,
+  husarion_mecanum_drive_controller::MecanumDriveController,
   controller_interface::ChainableControllerInterface)

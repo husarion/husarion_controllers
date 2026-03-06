@@ -21,8 +21,8 @@
 // Based on: https://ecam-eurobot.github.io/Tutorials/mechanical/mecanum.html
 // Author: Maciej Stępień
 
-#ifndef MECANUM_DRIVE_CONTROLLER__MECANUM_DRIVE_CONTROLLER_HPP_
-#define MECANUM_DRIVE_CONTROLLER__MECANUM_DRIVE_CONTROLLER_HPP_
+#ifndef HUSARION_MECANUM_DRIVE_CONTROLLER__MECANUM_DRIVE_CONTROLLER_HPP_
+#define HUSARION_MECANUM_DRIVE_CONTROLLER__MECANUM_DRIVE_CONTROLLER_HPP_
 
 #include <chrono>
 #include <cmath>
@@ -43,11 +43,11 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
 
-#include "mecanum_drive_controller/mecanum_drive_controller_parameters.hpp"
-#include "mecanum_drive_controller/odometry.hpp"
-#include "mecanum_drive_controller/speed_limiter.hpp"
+#include "husarion_mecanum_drive_controller/mecanum_drive_controller_parameters.hpp"
+#include "husarion_mecanum_drive_controller/odometry.hpp"
+#include "husarion_mecanum_drive_controller/speed_limiter.hpp"
 
-namespace mecanum_drive_controller
+namespace husarion_mecanum_drive_controller
 {
 class MecanumDriveController : public controller_interface::ChainableControllerInterface
 {
@@ -156,5 +156,5 @@ protected:
 private:
   void reset_buffers();
 };
-}  // namespace mecanum_drive_controller
-#endif  // MECANUM_DRIVE_CONTROLLER__MECANUM_DRIVE_CONTROLLER_HPP_
+}  // namespace husarion_mecanum_drive_controller
+#endif  // HUSARION_MECANUM_DRIVE_CONTROLLER__MECANUM_DRIVE_CONTROLLER_HPP_

@@ -56,7 +56,7 @@ ament_target_dependencies(mecanum_drive_controller PUBLIC
 pluginlib_export_plugin_description_file(controller_interface
                                          mecanum_drive_plugin.xml)
 
-install(DIRECTORY include/ DESTINATION include/mecanum_drive_controller)
+install(DIRECTORY include/ DESTINATION include/husarion_mecanum_drive_controller)
 
 install(
   TARGETS mecanum_drive_controller mecanum_drive_controller_parameters
