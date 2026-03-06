@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!-- Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers) -->
 <package format="3">
-  <name>mecanum_drive_controller</name>
+  <name>husarion_mecanum_drive_controller</name>
   <version>1.0.0</version>
   <description>Controller for a mecanum drive mobile base.</description>
   <maintainer email="support@husarion.com">Husarion</maintainer>

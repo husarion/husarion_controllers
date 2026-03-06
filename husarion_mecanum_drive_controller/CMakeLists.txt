@@ -2,7 +2,7 @@
 # (https://github.com/ros-controls/ros2_controllers)
 
 cmake_minimum_required(VERSION 3.11)
-project(mecanum_drive_controller)
+project(husarion_mecanum_drive_controller)
 
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
