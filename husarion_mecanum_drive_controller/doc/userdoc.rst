@@ -1,9 +1,9 @@
-.. _mecanum_drive_controller_userdoc:
+.. _husarion_mecanum_drive_controller_userdoc:
 
 .. Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers)
 
-mecanum_drive_controller
-========================
+husarion_mecanum_drive_controller
+=================================
 
 Controller for mobile robots with mecanum drive based on diff_drive_controller (https://github.com/ros-controls/ros2_controllers).
 Input for control are robot body velocity commands which are translated to wheel commands for the mecanum drive base.

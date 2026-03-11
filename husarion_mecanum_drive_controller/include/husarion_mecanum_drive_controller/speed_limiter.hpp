@@ -20,14 +20,14 @@
 // Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers)
 // Author: Maciej Stępień
 
-#ifndef MECANUM_DRIVE_CONTROLLER__SPEED_LIMITER_HPP_
-#define MECANUM_DRIVE_CONTROLLER__SPEED_LIMITER_HPP_
+#ifndef HUSARION_MECANUM_DRIVE_CONTROLLER__SPEED_LIMITER_HPP_
+#define HUSARION_MECANUM_DRIVE_CONTROLLER__SPEED_LIMITER_HPP_
 
 #include <limits>
 
 #include "control_toolbox/rate_limiter.hpp"
 
-namespace mecanum_drive_controller
+namespace husarion_mecanum_drive_controller
 {
 class SpeedLimiter
 {
@@ -146,6 +146,6 @@ private:
   control_toolbox::RateLimiter<double> speed_limiter_;  // Instance of the new RateLimiter
 };
 
-}  // namespace mecanum_drive_controller
+}  // namespace husarion_mecanum_drive_controller
 
-#endif  // MECANUM_DRIVE_CONTROLLER__SPEED_LIMITER_HPP_
+#endif  // HUSARION_MECANUM_DRIVE_CONTROLLER__SPEED_LIMITER_HPP_

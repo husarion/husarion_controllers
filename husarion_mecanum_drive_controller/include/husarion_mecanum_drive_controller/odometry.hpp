@@ -24,13 +24,13 @@
 // Based on: https://ecam-eurobot.github.io/Tutorials/mechanical/mecanum.html
 // Author: Maciej Stępień
 
-#ifndef MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_
-#define MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_
+#ifndef HUSARION_MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_
+#define HUSARION_MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_
 
 #include "rclcpp/time.hpp"
 #include "rcpputils/rolling_mean_accumulator.hpp"
 
-namespace mecanum_drive_controller
+namespace husarion_mecanum_drive_controller
 {
 class Odometry
 {
@@ -95,6 +95,6 @@ private:
   RollingMeanAccumulator angular_accumulator_;
 };
 
-}  // namespace mecanum_drive_controller
+}  // namespace husarion_mecanum_drive_controller
 
-#endif  // MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_
+#endif  // HUSARION_MECANUM_DRIVE_CONTROLLER__ODOMETRY_HPP_
