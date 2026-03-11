@@ -1,8 +1,8 @@
-.. _mecanum_drive_controller_userdoc:
+.. _husarion_mecanum_drive_controller_userdoc:
 
 .. Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers)
 
-mecanum_drive_controller
+husarion_mecanum_drive_controller
 ========================
 
 Controller for mobile robots with mecanum drive based on diff_drive_controller (https://github.com/ros-controls/ros2_controllers).

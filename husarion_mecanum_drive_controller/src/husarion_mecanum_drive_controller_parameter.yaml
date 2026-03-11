@@ -1,4 +1,4 @@
-mecanum_drive_controller:
+husarion_mecanum_drive_controller:
   front_left_wheel_name: {
     type: string,
     description: "Link name of the front left side wheel",
