@@ -1,4 +1,5 @@
 // Copyright (c) 2022 Samsung R&D Institute Russia
+// Copyright 2025 Husarion sp. z o.o.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +19,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "realtime_tools/realtime_buffer.hpp"
 
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
@@ -86,6 +89,9 @@ protected:
 
   /// @brief PointCloud data subscriber
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr data_sub_;
+  realtime_tools::RealtimeBuffer<sensor_msgs::msg::PointCloud2::ConstSharedPtr>
+    received_data_msg_ptr_{nullptr};
+  realtime_tools::RealtimeBuffer<std::shared_ptr<tf2::Transform>> latest_tf_transform_ptr_{nullptr};
 
   // Minimum and maximum height of PointCloud projected to 2D space
   double min_height_, max_height_;
@@ -95,9 +101,6 @@ protected:
    * ground contouring
    */
   bool use_global_height_;
-
-  /// @brief Latest data obtained from pointcloud
-  sensor_msgs::msg::PointCloud2::ConstSharedPtr data_;
 };  // class PointCloud
 
 }  // namespace collision_monitor_controller

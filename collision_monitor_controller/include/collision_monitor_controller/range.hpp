@@ -1,4 +1,5 @@
 // Copyright (c) 2022 Samsung R&D Institute Russia
+// Copyright 2025 Husarion sp. z o.o.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +19,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "realtime_tools/realtime_buffer.hpp"
 
 #include "sensor_msgs/msg/range.hpp"
 
@@ -86,12 +89,12 @@ protected:
 
   /// @brief Range sensor data subscriber
   rclcpp::Subscription<sensor_msgs::msg::Range>::SharedPtr data_sub_;
+  realtime_tools::RealtimeBuffer<sensor_msgs::msg::Range::ConstSharedPtr> received_data_msg_ptr_{
+    nullptr};
+  realtime_tools::RealtimeBuffer<std::shared_ptr<tf2::Transform>> latest_tf_transform_ptr_{nullptr};
 
   /// @brief Angle increment (in rad) between two obstacle points at the range arc
   double obstacles_angle_;
-
-  /// @brief Latest data obtained from range sensor
-  sensor_msgs::msg::Range::ConstSharedPtr data_;
 };  // class Range
 
 }  // namespace collision_monitor_controller

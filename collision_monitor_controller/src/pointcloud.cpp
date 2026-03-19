@@ -1,4 +1,5 @@
 // Copyright (c) 2022 Samsung R&D Institute Russia
+// Copyright 2025 Husarion sp. z o.o.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,8 +33,7 @@ PointCloud::PointCloud(
   const rclcpp::Duration & source_timeout, const bool base_shift_correction)
 : Source(
     node, source_name, tf_buffer, base_frame_id, global_frame_id, transform_tolerance,
-    source_timeout, base_shift_correction),
-  data_(nullptr)
+    source_timeout, base_shift_correction)
 {
   RCLCPP_INFO(logger_, "[%s]: Creating PointCloud", source_name_.c_str());
 }
@@ -64,26 +64,24 @@ void PointCloud::configure()
 
 bool PointCloud::getData(const rclcpp::Time & curr_time, std::vector<Point> & data)
 {
+  const auto latest_data = *received_data_msg_ptr_.readFromRT();
+  const auto latest_tf_transform = *latest_tf_transform_ptr_.readFromRT();
+
   // Ignore data from the source if it is not being published yet or
   // not published for a long time
-  if (data_ == nullptr) {
+  if (latest_data == nullptr || latest_tf_transform == nullptr) {
     return false;
   }
-  if (!sourceValid(data_->header.stamp, curr_time)) {
-    return false;
-  }
-
-  tf2::Transform tf_transform;
-  if (!getTransform(curr_time, data_->header, tf_transform)) {
+  if (!sourceValid(latest_data->header.stamp, curr_time)) {
     return false;
   }
 
-  sensor_msgs::PointCloud2ConstIterator<float> iter_x(*data_, "x");
-  sensor_msgs::PointCloud2ConstIterator<float> iter_y(*data_, "y");
-  sensor_msgs::PointCloud2ConstIterator<float> iter_z(*data_, "z");
+  sensor_msgs::PointCloud2ConstIterator<float> iter_x(*latest_data, "x");
+  sensor_msgs::PointCloud2ConstIterator<float> iter_y(*latest_data, "y");
+  sensor_msgs::PointCloud2ConstIterator<float> iter_z(*latest_data, "z");
 
   bool height_present = false;
-  for (const auto & field : data_->fields) {
+  for (const auto & field : latest_data->fields) {
     if (field.name == "height") {
       height_present = true;
     }
@@ -99,7 +97,7 @@ bool PointCloud::getData(const rclcpp::Time & curr_time, std::vector<Point> & da
       source_name_.c_str());
     return false;
   }
-  sensor_msgs::PointCloud2ConstIterator<float> iter_height(*data_, height_field);
+  sensor_msgs::PointCloud2ConstIterator<float> iter_height(*latest_data, height_field);
 
   // Refill data array with PointCloud points in base frame
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
@@ -118,7 +116,7 @@ bool PointCloud::getData(const rclcpp::Time & curr_time, std::vector<Point> & da
       continue;
     }
 
-    tf2::Vector3 p_v3_b = tf_transform * p_v3_s;
+    tf2::Vector3 p_v3_b = *latest_tf_transform * p_v3_s;
 
     // Still need to transfer height from "z" field if not using global height
     if (!use_global_height_) {
@@ -156,6 +154,20 @@ void PointCloud::getParameters(std::string & source_topic)
   use_global_height_ = node->get_parameter(source_name_ + ".use_global_height").as_bool();
 }
 
-void PointCloud::dataCallback(sensor_msgs::msg::PointCloud2::ConstSharedPtr msg) { data_ = msg; }
+void PointCloud::dataCallback(sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
+{
+  received_data_msg_ptr_.writeFromNonRT(msg);
+
+  tf2::Transform tf_transform;
+  if (!getTransform(msg->header.stamp, msg->header, tf_transform)) {
+    RCLCPP_WARN(
+      logger_, "[%s]: Failed to get transform for the latest pointcloud data",
+      source_name_.c_str());
+    received_data_msg_ptr_.writeFromNonRT(nullptr);
+    return;
+  }
+
+  latest_tf_transform_ptr_.writeFromNonRT(std::make_shared<tf2::Transform>(tf_transform));
+}
 
 }  // namespace collision_monitor_controller

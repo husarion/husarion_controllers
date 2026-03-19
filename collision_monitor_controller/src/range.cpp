@@ -1,4 +1,5 @@
 // Copyright (c) 2022 Samsung R&D Institute Russia
+// Copyright 2025 Husarion sp. z o.o.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,8 +34,7 @@ Range::Range(
   const rclcpp::Duration & source_timeout, const bool base_shift_correction)
 : Source(
     node, source_name, tf_buffer, base_frame_id, global_frame_id, transform_tolerance,
-    source_timeout, base_shift_correction),
-  data_(nullptr)
+    source_timeout, base_shift_correction)
 {
   RCLCPP_INFO(logger_, "[%s]: Creating Range", source_name_.c_str());
 }
@@ -64,46 +64,46 @@ void Range::configure()
 
 bool Range::getData(const rclcpp::Time & curr_time, std::vector<Point> & data)
 {
+  const auto latest_data = *received_data_msg_ptr_.readFromRT();
+  const auto latest_tf_transform = *latest_tf_transform_ptr_.readFromRT();
+
   // Ignore data from the source if it is not being published yet or
   // not being published for a long time
-  if (data_ == nullptr) {
+  if (latest_data == nullptr || latest_tf_transform == nullptr) {
     return false;
   }
-  if (!sourceValid(data_->header.stamp, curr_time)) {
+  if (!sourceValid(latest_data->header.stamp, curr_time)) {
     return false;
   }
 
   // Ignore data, if its range is out of scope of range sensor abilities
-  if (data_->range < data_->min_range || data_->range > data_->max_range) {
+  if (latest_data->range < latest_data->min_range || latest_data->range > latest_data->max_range) {
     RCLCPP_DEBUG(
       logger_, "[%s]: Data range %fm is out of {%f..%f} sensor span. Ignoring...",
-      source_name_.c_str(), data_->range, data_->min_range, data_->max_range);
-    return false;
-  }
-
-  tf2::Transform tf_transform;
-  if (!getTransform(curr_time, data_->header, tf_transform)) {
+      source_name_.c_str(), latest_data->range, latest_data->min_range, latest_data->max_range);
     return false;
   }
 
   // Calculate poses and refill data array
   float angle;
-  for (angle = -data_->field_of_view / 2; angle < data_->field_of_view / 2;
+  for (angle = -latest_data->field_of_view / 2; angle < latest_data->field_of_view / 2;
        angle += obstacles_angle_) {
     // Transform point coordinates from source frame -> to base frame
-    tf2::Vector3 p_v3_s(data_->range * std::cos(angle), data_->range * std::sin(angle), 0.0);
-    tf2::Vector3 p_v3_b = tf_transform * p_v3_s;
+    tf2::Vector3 p_v3_s(
+      latest_data->range * std::cos(angle), latest_data->range * std::sin(angle), 0.0);
+    tf2::Vector3 p_v3_b = *latest_tf_transform * p_v3_s;
 
     // Refill data array
     data.push_back({p_v3_b.x(), p_v3_b.y()});
   }
 
   // Make sure that last (field_of_view / 2) point will be in the data array
-  angle = data_->field_of_view / 2;
+  angle = latest_data->field_of_view / 2;
 
   // Transform point coordinates from source frame -> to base frame
-  tf2::Vector3 p_v3_s(data_->range * std::cos(angle), data_->range * std::sin(angle), 0.0);
-  tf2::Vector3 p_v3_b = tf_transform * p_v3_s;
+  tf2::Vector3 p_v3_s(
+    latest_data->range * std::cos(angle), latest_data->range * std::sin(angle), 0.0);
+  tf2::Vector3 p_v3_b = *latest_tf_transform * p_v3_s;
 
   // Refill data array
   data.push_back({p_v3_b.x(), p_v3_b.y()});
@@ -125,6 +125,19 @@ void Range::getParameters(std::string & source_topic)
   obstacles_angle_ = node->get_parameter(source_name_ + ".obstacles_angle").as_double();
 }
 
-void Range::dataCallback(sensor_msgs::msg::Range::ConstSharedPtr msg) { data_ = msg; }
+void Range::dataCallback(sensor_msgs::msg::Range::ConstSharedPtr msg)
+{
+  received_data_msg_ptr_.writeFromNonRT(msg);
+
+  tf2::Transform tf_transform;
+  if (!getTransform(msg->header.stamp, msg->header, tf_transform)) {
+    RCLCPP_WARN(
+      logger_, "[%s]: Failed to get transform for the latest range data", source_name_.c_str());
+    received_data_msg_ptr_.writeFromNonRT(nullptr);
+    return;
+  }
+
+  latest_tf_transform_ptr_.writeFromNonRT(std::make_shared<tf2::Transform>(tf_transform));
+}
 
 }  // namespace collision_monitor_controller
