@@ -133,7 +133,7 @@ void Range::dataCallback(sensor_msgs::msg::Range::ConstSharedPtr msg)
   if (!getTransform(msg->header.stamp, msg->header, tf_transform)) {
     RCLCPP_WARN(
       logger_, "[%s]: Failed to get transform for the latest range data", source_name_.c_str());
-    received_data_msg_ptr_.writeFromNonRT(nullptr);
+    latest_tf_transform_ptr_.writeFromNonRT(nullptr);
     return;
   }
 

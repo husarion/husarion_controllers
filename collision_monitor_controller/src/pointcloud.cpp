@@ -163,7 +163,7 @@ void PointCloud::dataCallback(sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
     RCLCPP_WARN(
       logger_, "[%s]: Failed to get transform for the latest pointcloud data",
       source_name_.c_str());
-    received_data_msg_ptr_.writeFromNonRT(nullptr);
+    latest_tf_transform_ptr_.writeFromNonRT(nullptr);
     return;
   }
 

@@ -269,7 +269,7 @@ public:
   {
   }
 
-  bool dataReceived() const { return data_ != nullptr; }
+  bool dataReceived() { return *received_data_msg_ptr_.readFromRT() != nullptr; }
 };  // ScanWrapper
 
 class PointCloudWrapper : public collision_monitor_controller::PointCloud
@@ -286,7 +286,7 @@ public:
   {
   }
 
-  bool dataReceived() const { return data_ != nullptr; }
+  bool dataReceived() { return *received_data_msg_ptr_.readFromRT() != nullptr; }
 };  // PointCloudWrapper
 
 class RangeWrapper : public collision_monitor_controller::Range
@@ -303,7 +303,7 @@ public:
   {
   }
 
-  bool dataReceived() const { return data_ != nullptr; }
+  bool dataReceived() { return *received_data_msg_ptr_.readFromRT() != nullptr; }
 };  // RangeWrapper
 
 class PolygonWrapper : public collision_monitor_controller::PolygonSource
