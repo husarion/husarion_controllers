@@ -84,11 +84,11 @@ controller_interface::return_type CollisionMonitor::update_reference_from_subscr
 }
 
 controller_interface::return_type CollisionMonitor::update_and_write_commands(
-  const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+  const rclcpp::Time & time, const rclcpp::Duration & /*period*/)
 {
   auto result = std::vector<bool>();
 
-  process({reference_interfaces_[0], 0.0, reference_interfaces_[1]}, std_msgs::msg::Header());
+  process({reference_interfaces_[0], 0.0, reference_interfaces_[1]}, time);
 
   result.push_back(command_interfaces_[0].set_value(reference_interfaces_[0]));
   result.push_back(command_interfaces_[1].set_value(reference_interfaces_[1]));
@@ -310,8 +310,7 @@ void CollisionMonitor::cmdVelInCallbackUnstamped(geometry_msgs::msg::Twist::Shar
   cmdVelInCallbackStamped(twist_stamped);
 }
 
-void CollisionMonitor::publishVelocity(
-  const Action & robot_action, const std_msgs::msg::Header & header)
+void CollisionMonitor::publishVelocity(const Action & robot_action, const rclcpp::Time & curr_time)
 {
   if (robot_action.req_vel.isZero()) {
     if (!robot_action_prev_.req_vel.isZero()) {
@@ -329,7 +328,8 @@ void CollisionMonitor::publishVelocity(
   }
 
   auto cmd_vel_out_msg = std::make_unique<geometry_msgs::msg::TwistStamped>();
-  cmd_vel_out_msg->header = header;
+  cmd_vel_out_msg->header.stamp = curr_time;
+  cmd_vel_out_msg->header.frame_id = this->get_node()->get_parameter("base_frame_id").as_string();
   cmd_vel_out_msg->twist.linear.x = robot_action.req_vel.x;
   cmd_vel_out_msg->twist.linear.y = robot_action.req_vel.y;
   cmd_vel_out_msg->twist.angular.z = robot_action.req_vel.tw;
@@ -507,11 +507,8 @@ bool CollisionMonitor::configureSources(
   return true;
 }
 
-void CollisionMonitor::process(const Velocity & cmd_vel_in, const std_msgs::msg::Header & header)
+void CollisionMonitor::process(const Velocity & cmd_vel_in, const rclcpp::Time & curr_time)
 {
-  // Current timestamp for all inner routines prolongation
-  rclcpp::Time curr_time = this->get_node()->now();
-
   // Do nothing if main worker in non-active state
   if (!process_active_) {
     return;
@@ -611,7 +608,7 @@ void CollisionMonitor::process(const Velocity & cmd_vel_in, const std_msgs::msg:
   }
 
   // Publish required robot velocity
-  publishVelocity(robot_action, header);
+  publishVelocity(robot_action, curr_time);
 
   // Publish polygons for better visualization
   publishPolygons();

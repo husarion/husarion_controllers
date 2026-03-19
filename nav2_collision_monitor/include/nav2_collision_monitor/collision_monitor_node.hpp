@@ -141,7 +141,7 @@ protected:
    * @param robot_action Robot action to publish
    * @param header TwistStamped header to use
    */
-  void publishVelocity(const Action & robot_action, const std_msgs::msg::Header & header);
+  void publishVelocity(const Action & robot_action, const rclcpp::Time & curr_time);
 
   /**
    * @brief Supporting routine obtaining all ROS-parameters
@@ -182,7 +182,7 @@ protected:
    * @param cmd_vel_in Input desired robot velocity
    * @param header Twist header
    */
-  void process(const Velocity & cmd_vel_in, const std_msgs::msg::Header & header);
+  void process(const Velocity & cmd_vel_in, const rclcpp::Time & curr_time);
 
   /**
    * @brief Processes the polygon of STOP, SLOWDOWN and LIMIT action type
