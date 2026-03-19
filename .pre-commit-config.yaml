@@ -82,7 +82,6 @@ repos:
         description: Check if copyright notice is available in all files.
         entry: ament_copyright
         language: system
-        exclude: /*array_parser*
 
     # Docs - RestructuredText hooks
   - repo: https://github.com/PyCQA/doc8

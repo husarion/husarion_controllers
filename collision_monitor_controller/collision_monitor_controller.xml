@@ -1,0 +1,10 @@
+<library path="collision_monitor_controller">
+  <class name="collision_monitor_controller/CollisionMonitor"
+    type="collision_monitor_controller::CollisionMonitor"
+    base_class_type="controller_interface::ChainableControllerInterface">
+    <description>
+      It subscribes to cmd_vel topic and checks if the velocity command is safe to execute.
+       If the command is not safe, it will publish a zero velocity command to stop the robot.
+    </description>
+  </class>
+</library>
