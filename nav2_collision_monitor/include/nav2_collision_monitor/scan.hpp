@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include "realtime_tools/realtime_buffer.hpp"
+
 #include "sensor_msgs/msg/laser_scan.hpp"
 
 #include "nav2_collision_monitor/source.hpp"
@@ -80,9 +82,9 @@ protected:
 
   /// @brief Laser scanner data subscriber
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr data_sub_;
-
-  /// @brief Latest data obtained from laser scanner
-  sensor_msgs::msg::LaserScan::ConstSharedPtr data_;
+  realtime_tools::RealtimeBuffer<sensor_msgs::msg::LaserScan::ConstSharedPtr>
+    received_data_msg_ptr_{nullptr};
+  realtime_tools::RealtimeBuffer<std::shared_ptr<tf2::Transform>> latest_tf_transform_ptr_{nullptr};
 };  // class Scan
 
 }  // namespace nav2_collision_monitor

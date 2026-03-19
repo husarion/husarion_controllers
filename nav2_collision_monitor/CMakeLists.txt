@@ -30,7 +30,6 @@ include_directories(include)
 
 set(dependencies
     rclcpp
-    # rclcpp_components
     sensor_msgs
     geometry_msgs
     std_msgs
@@ -41,11 +40,14 @@ set(dependencies
     nav2_costmap_2d
     nav2_msgs
     visualization_msgs
-    controller_interface)
+    controller_interface
+    pluginlib
+    rclcpp_lifecycle
+    realtime_tools)
 
 set(monitor_executable_name collision_monitor)
 set(detector_executable_name collision_detector)
-set(monitor_library_name ${monitor_executable_name}_core)
+set(monitor_library_name nav2_collision_monitor)
 set(detector_library_name ${detector_executable_name}_core)
 
 add_library(
@@ -86,11 +88,12 @@ ament_target_dependencies(${monitor_executable_name} ${dependencies})
 
 ament_target_dependencies(${detector_executable_name} ${dependencies})
 
-# rclcpp_components_register_nodes(${monitor_library_name}
-# "nav2_collision_monitor::CollisionMonitor")
-
-# rclcpp_components_register_nodes(${detector_library_name}
-# "nav2_collision_monitor::CollisionDetector")
+# Causes the visibility macros to use dllexport rather than dllimport, which is
+# appropriate when building the dll but not consuming it.
+target_compile_definitions(${monitor_library_name}
+                           PRIVATE "NAV2_COLLISION_MONITOR_BUILDING_DLL")
+pluginlib_export_plugin_description_file(controller_interface
+                                         collision_monitor_controller.xml)
 
 # Install ###
 

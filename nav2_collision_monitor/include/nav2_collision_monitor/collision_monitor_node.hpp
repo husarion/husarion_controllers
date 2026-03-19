@@ -22,6 +22,9 @@
 #include <vector>
 
 #include "controller_interface/chainable_controller_interface.hpp"
+#include "realtime_tools/realtime_buffer.hpp"
+#include "realtime_tools/realtime_publisher.hpp"
+
 #include "geometry_msgs/msg/twist.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -60,7 +63,7 @@ public:
    * @brief Constructor for the nav2_collision_monitor::CollisionMonitor
    * @param options Additional options to control creation of the node.
    */
-  explicit CollisionMonitor();
+  CollisionMonitor();
   /**
    * @brief Destructor for the nav2_collision_monitor::CollisionMonitor
    */
@@ -249,14 +252,22 @@ protected:
   /// @brief Input cmd_vel subscriber
   std::unique_ptr<nav2_util::TwistSubscriber> cmd_vel_in_sub_;
   /// @brief Output cmd_vel publisher
-  std::unique_ptr<nav2_util::TwistPublisher> cmd_vel_out_pub_;
+  // std::unique_ptr<nav2_util::TwistPublisher> cmd_vel_out_pub_;
+  rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::TwistStamped>::SharedPtr
+    cmd_vel_out_pub_;
+  realtime_tools::RealtimePublisher<geometry_msgs::msg::TwistStamped>::SharedPtr
+    realtime_cmd_vel_out_pub_;
 
   /// @brief CollisionMonitor state publisher
   rclcpp_lifecycle::LifecyclePublisher<nav2_msgs::msg::CollisionMonitorState>::SharedPtr state_pub_;
+  realtime_tools::RealtimePublisher<nav2_msgs::msg::CollisionMonitorState>::SharedPtr
+    realtime_state_pub_;
 
   /// @brief Collision points marker publisher
   rclcpp_lifecycle::LifecyclePublisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     collision_points_marker_pub_;
+  realtime_tools::RealtimePublisher<visualization_msgs::msg::MarkerArray>::SharedPtr
+    realtime_collision_points_marker_pub_;
 
   /// @brief Enable/disable collision monitor service
   rclcpp::Service<nav2_msgs::srv::Toggle>::SharedPtr toggle_cm_service_;
@@ -273,6 +284,9 @@ protected:
   rclcpp::Time stop_stamp_;
   /// @brief Timeout after which 0-velocity ceases to be published
   rclcpp::Duration stop_pub_timeout_;
+
+  realtime_tools::RealtimeBuffer<geometry_msgs::msg::TwistStamped::SharedPtr>
+    received_cmd_vel_msg_ptr_{nullptr};
 };  // class CollisionMonitor
 
 }  // namespace nav2_collision_monitor

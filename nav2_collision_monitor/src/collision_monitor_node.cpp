@@ -1,4 +1,5 @@
 // Copyright (c) 2022 Samsung R&D Institute Russia
+// Copyright 2026 Husarion sp. z o.o.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +19,7 @@
 #include <functional>
 #include <utility>
 
+#include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "tf2_ros/create_timer_ros.h"
 
 #include "nav2_util/node_utils.hpp"
@@ -35,7 +37,7 @@ CollisionMonitor::CollisionMonitor()
   enabled_{true},
   process_active_(false),
   robot_action_prev_{DO_NOTHING, {-1.0, -1.0, -1.0}, ""},
-  stop_stamp_{0, 0, this->get_node()->get_clock()->get_clock_type()},
+  stop_stamp_{0, 0, RCL_ROS_TIME},
   stop_pub_timeout_(1.0, 0.0)
 {
 }
@@ -52,10 +54,9 @@ controller_interface::InterfaceConfiguration CollisionMonitor::command_interface
   controller_interface::InterfaceConfiguration command_interfaces_config;
   command_interfaces_config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
 
-  command_interfaces_config.names.reserve(3);
-  command_interfaces_config.names.push_back("command_interface_linear_x");
-  command_interfaces_config.names.push_back("command_interface_linear_y");
-  command_interfaces_config.names.push_back("command_interface_angular_z");
+  command_interfaces_config.names.reserve(2);
+  command_interfaces_config.names.push_back("drive_controller/linear/velocity");
+  command_interfaces_config.names.push_back("drive_controller/angular/velocity");
 
   return command_interfaces_config;
 }
@@ -69,12 +70,35 @@ controller_interface::InterfaceConfiguration CollisionMonitor::state_interface_c
 controller_interface::return_type CollisionMonitor::update_reference_from_subscribers(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
+  const auto cmd_vel_msg = *received_cmd_vel_msg_ptr_.readFromRT();
+
+  if (cmd_vel_msg == nullptr) {
+    std::fill(reference_interfaces_.begin(), reference_interfaces_.end(), 0.0);
+    return controller_interface::return_type::OK;
+  }
+
+  reference_interfaces_[0] = cmd_vel_msg->twist.linear.x;
+  reference_interfaces_[1] = cmd_vel_msg->twist.angular.z;
+
   return controller_interface::return_type::OK;
 }
 
 controller_interface::return_type CollisionMonitor::update_and_write_commands(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
+  auto result = std::vector<bool>();
+
+  process({reference_interfaces_[0], 0.0, reference_interfaces_[1]}, std_msgs::msg::Header());
+
+  result.push_back(command_interfaces_[0].set_value(reference_interfaces_[0]));
+  result.push_back(command_interfaces_[1].set_value(reference_interfaces_[1]));
+
+  if (!std::all_of(result.begin(), result.end(), [](bool success) { return success; })) {
+    RCLCPP_ERROR(
+      get_node()->get_logger(), "Unable to set the command to one of the command handles!");
+    return controller_interface::return_type::ERROR;
+  }
+
   return controller_interface::return_type::OK;
 }
 
@@ -88,6 +112,7 @@ controller_interface::CallbackReturn CollisionMonitor::on_configure(
   const rclcpp_lifecycle::State & state)
 {
   RCLCPP_INFO(get_node()->get_logger(), "Configuring");
+  reference_interfaces_.resize(2, std::numeric_limits<double>::quiet_NaN());
 
   // Transform buffer and listener initialization
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_node()->get_clock());
@@ -112,16 +137,27 @@ controller_interface::CallbackReturn CollisionMonitor::on_configure(
     std::bind(&CollisionMonitor::cmdVelInCallbackStamped, this, std::placeholders::_1));
 
   auto node = get_node()->shared_from_this();
-  cmd_vel_out_pub_ = std::make_unique<nav2_util::TwistPublisher>(node, cmd_vel_out_topic, 1);
+  // cmd_vel_out_pub_ = std::make_unique<nav2_util::TwistPublisher>(node, cmd_vel_out_topic, 1);
+  cmd_vel_out_pub_ = node->create_publisher<geometry_msgs::msg::TwistStamped>(
+    cmd_vel_out_topic, rclcpp::SystemDefaultsQoS());
+  realtime_cmd_vel_out_pub_ =
+    std::make_shared<realtime_tools::RealtimePublisher<geometry_msgs::msg::TwistStamped>>(
+      cmd_vel_out_pub_);
 
   if (!state_topic.empty()) {
     state_pub_ = this->get_node()->create_publisher<nav2_msgs::msg::CollisionMonitorState>(
       state_topic, 1);
+    realtime_state_pub_ =
+      std::make_shared<realtime_tools::RealtimePublisher<nav2_msgs::msg::CollisionMonitorState>>(
+        state_pub_);
   }
 
   collision_points_marker_pub_ =
     this->get_node()->create_publisher<visualization_msgs::msg::MarkerArray>(
       "~/collision_points_marker", 1);
+  realtime_collision_points_marker_pub_ =
+    std::make_shared<realtime_tools::RealtimePublisher<visualization_msgs::msg::MarkerArray>>(
+      collision_points_marker_pub_);
 
   // Toggle service initialization
   toggle_cm_service_ = get_node()->create_service<nav2_msgs::srv::Toggle>(
@@ -170,6 +206,8 @@ controller_interface::CallbackReturn CollisionMonitor::on_activate(
 
   // Creating bond connection
   // createBond();
+
+  RCLCPP_INFO(get_node()->get_logger(), "Activating done");
 
   return controller_interface::CallbackReturn::SUCCESS;
 }
@@ -241,13 +279,14 @@ controller_interface::CallbackReturn CollisionMonitor::on_error(
 std::vector<hardware_interface::CommandInterface> CollisionMonitor::on_export_reference_interfaces()
 {
   std::vector<hardware_interface::CommandInterface> reference_interfaces;
+  reference_interfaces.reserve(reference_interfaces_.size());
 
-  // for (const auto & source : sources_) {
-  //   auto source_reference_interfaces = source->exportReferenceInterfaces();
-  //   reference_interfaces.insert(
-  //     reference_interfaces.end(), source_reference_interfaces.begin(),
-  //     source_reference_interfaces.end());
-  // }
+  reference_interfaces.push_back(hardware_interface::CommandInterface(
+    get_node()->get_name() + std::string("/linear/x"), hardware_interface::HW_IF_VELOCITY,
+    &reference_interfaces_[0]));
+  reference_interfaces.push_back(hardware_interface::CommandInterface(
+    get_node()->get_name() + std::string("/angular/z"), hardware_interface::HW_IF_VELOCITY,
+    &reference_interfaces_[1]));
 
   return reference_interfaces;
 }
@@ -261,7 +300,7 @@ void CollisionMonitor::cmdVelInCallbackStamped(geometry_msgs::msg::TwistStamped:
     return;
   }
 
-  process({msg->twist.linear.x, msg->twist.linear.y, msg->twist.angular.z}, msg->header);
+  received_cmd_vel_msg_ptr_.writeFromNonRT(msg);
 }
 
 void CollisionMonitor::cmdVelInCallbackUnstamped(geometry_msgs::msg::Twist::SharedPtr msg)
@@ -280,7 +319,11 @@ void CollisionMonitor::publishVelocity(
       stop_stamp_ = this->get_node()->now();
     } else if (this->get_node()->now() - stop_stamp_ > stop_pub_timeout_) {
       // More than stop_pub_timeout_ passed after robot has been stopped.
-      // Cease publishing output cmd_vel.
+      // Cease publishing output cmd_vel and set references to zero.
+
+      // Update references
+      reference_interfaces_[0] = 0.0;
+      reference_interfaces_[1] = 0.0;
       return;
     }
   }
@@ -292,7 +335,13 @@ void CollisionMonitor::publishVelocity(
   cmd_vel_out_msg->twist.angular.z = robot_action.req_vel.tw;
   // linear.z, angular.x and angular.y will remain 0.0
 
-  cmd_vel_out_pub_->publish(std::move(cmd_vel_out_msg));
+  // cmd_vel_out_pub_->publish(std::move(cmd_vel_out_msg));
+  realtime_cmd_vel_out_pub_->msg_ = *cmd_vel_out_msg;
+  realtime_cmd_vel_out_pub_->unlockAndPublish();
+
+  // Update references
+  reference_interfaces_[0] = robot_action.req_vel.x;
+  reference_interfaces_[1] = robot_action.req_vel.tw;
 }
 
 bool CollisionMonitor::getParameters(
@@ -524,7 +573,9 @@ void CollisionMonitor::process(const Velocity & cmd_vel_in, const std_msgs::msg:
   }
 
   if (collision_points_marker_pub_->get_subscription_count() > 0) {
-    collision_points_marker_pub_->publish(std::move(marker_array));
+    // collision_points_marker_pub_->publish(std::move(marker_array));
+    realtime_collision_points_marker_pub_->msg_ = *marker_array;
+    realtime_collision_points_marker_pub_->unlockAndPublish();
   }
 
   for (std::shared_ptr<Polygon> polygon : polygons_) {
@@ -691,7 +742,8 @@ void CollisionMonitor::notifyActionState(
     state_msg->polygon_name = robot_action.polygon_name;
     state_msg->action_type = robot_action.action_type;
 
-    state_pub_->publish(std::move(state_msg));
+    realtime_state_pub_->msg_ = *state_msg;
+    realtime_state_pub_->unlockAndPublish();
   }
 }
 
@@ -720,9 +772,7 @@ void CollisionMonitor::toggleCMServiceCallback(
 
 }  // namespace nav2_collision_monitor
 
-// #include "rclcpp_components/register_node_macro.hpp"
+#include "class_loader/register_macro.hpp"
 
-// // Register the component with class_loader.
-// // This acts as a sort of entry point, allowing the component to be discoverable when its library
-// // is being loaded into a running process.
-// RCLCPP_COMPONENTS_REGISTER_NODE(nav2_collision_monitor::CollisionMonitor)
+CLASS_LOADER_REGISTER_CLASS(
+  nav2_collision_monitor::CollisionMonitor, controller_interface::ChainableControllerInterface)
