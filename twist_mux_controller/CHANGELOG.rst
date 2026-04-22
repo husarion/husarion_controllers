@@ -1,0 +1,22 @@
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package twist_mux_controller
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forthcoming
+-----------
+* ROS 2 twist mux controller (`#14 <https://github.com/husarion/husarion_controllers/issues/14>`_)
+  * velocity input controller
+  * add low pass filter
+  * and and update parameters
+  * add multiple cmd_vel inputs
+  * add source publisher
+  * add zero threshold
+  * add docs
+  * use priority checking
+  * rename to twist_mux_controller
+  * clean up
+  * add support for holonomic platforms
+  * pre-commit
+  * review fixes
+  * add topic name in warn msgs
+* Contributors: Dawid Kmak

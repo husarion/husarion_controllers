@@ -2,7 +2,7 @@
 <!-- Copied and adapted from diff_drive_controller (https://github.com/ros-controls/ros2_controllers) -->
 <package format="3">
   <name>husarion_mecanum_drive_controller</name>
-  <version>1.0.0</version>
+  <version>0.0.1</version>
   <description>Controller for a mecanum drive mobile base.</description>
   <maintainer email="support@husarion.com">Husarion</maintainer>
   <license>Apache License 2.0</license>
