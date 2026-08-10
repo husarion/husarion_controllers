@@ -18,9 +18,32 @@ The `TwistMuxController` is a ROS 2 chainable controller designed to process vel
   - `topic` [*string*, default: **{source_name}/cmd_vel**]: Name of the topic to subscribe to.
   - `timeout` [*double*, default: **0.5**]: Timeout for command velocity topic in seconds.
   - `priority` [*uint*, default: **0**]: The priority of the input in range [0, 255], where 0 is the lowest priority and 255 is the highest. Note, if there are multiple inputs with the same priority, the output will be chosen arbitrary.
-- `command_interface_linear_x` [*string*, default: **linear/x/velocity**]: Command interface for linear X velocity.
-- `command_interface_linear_y` [*string*, default: **linear/y/velocity**]: Command interface for linear Y velocity. Available only if `holonomic` parameter is set to `true`.
-- `command_interface_angular_z` [*string*, default: **angular/z/velocity**]: Command interface for angular velocity.
+- `drive_controller` [*string*, default: **""**]: Name of the chainable drive controller to forward the winning command to. When set, the three `command_interface_*` parameters are ignored and the interface names are derived from it (see [Addressing the drive controller](#addressing-the-drive-controller)). Leave empty to address the interfaces explicitly.
+- `command_interface_linear_x` [*string*, default: **linear/x/velocity**]: Command interface for linear X velocity. Ignored when `drive_controller` is set.
+- `command_interface_linear_y` [*string*, default: **linear/y/velocity**]: Command interface for linear Y velocity. Available only if `holonomic` parameter is set to `true`. Ignored when `drive_controller` is set.
+- `command_interface_angular_z` [*string*, default: **angular/z/velocity**]: Command interface for angular velocity. Ignored when `drive_controller` is set.
+
+## Addressing the drive controller
+
+Base controllers do not agree on how they name their reference interfaces. `mecanum_drive_controller` and `omni_wheel_drive_controller` qualify the axis, while `diff_drive_controller` omits it:
+
+| Drive controller | Reference interfaces |
+| --- | --- |
+| `mecanum_drive_controller`, `omni_wheel_drive_controller`, `husarion_mecanum_drive_controller` | `<name>/linear/x/velocity`, `<name>/linear/y/velocity`, `<name>/angular/z/velocity` |
+| `diff_drive_controller` | `<name>/linear/velocity`, `<name>/angular/velocity` |
+
+Setting `drive_controller` lets the controller apply the right convention itself, so switching a robot between drive types is a one-value change:
+
+```yaml
+  twist_mux_controller:
+    ros__parameters:
+      holonomic: true
+      drive_controller: mecanum_drive_controller
+```
+
+resolves to `mecanum_drive_controller/linear/x/velocity`, `.../linear/y/velocity`, `.../angular/z/velocity`, while `holonomic: false` with `drive_controller: drive_controller` resolves to `drive_controller/linear/velocity` and `drive_controller/angular/velocity`.
+
+The resolved names are logged at configure time. For a controller that follows neither convention, leave `drive_controller` empty and set `command_interface_*` explicitly.
 
 ## Interfaces
 

@@ -16,6 +16,7 @@
 #define TWIST_MUX_CONTROLLER_TWIST_MUX_CONTROLLER
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <controller_interface/chainable_controller_interface.hpp>
@@ -81,6 +82,8 @@ protected:
   std::vector<hardware_interface::CommandInterface> on_export_reference_interfaces() override;
 
   std::string get_source_from_prefix(const std::string & prefix) const;
+
+  std::vector<std::string> resolve_command_interface_names() const;
 
   static constexpr char kSourceNotPublished[] = "not_published";
 

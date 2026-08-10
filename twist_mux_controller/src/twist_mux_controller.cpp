@@ -28,22 +28,36 @@ namespace twist_mux_controller
 
 TwistMuxController::TwistMuxController() : controller_interface::ChainableControllerInterface() {}
 
+std::vector<std::string> TwistMuxController::resolve_command_interface_names() const
+{
+  if (params_.drive_controller.empty()) {
+    if (params_.holonomic) {
+      return {
+        params_.command_interface_linear_x, params_.command_interface_linear_y,
+        params_.command_interface_angular_z};
+    }
+    return {params_.command_interface_linear_x, params_.command_interface_angular_z};
+  }
+
+  const std::string prefix = params_.drive_controller + "/";
+  const std::string suffix = std::string("/") + hardware_interface::HW_IF_VELOCITY;
+
+  if (params_.holonomic) {
+    return {
+      prefix + "linear/x" + suffix, prefix + "linear/y" + suffix, prefix + "angular/z" + suffix};
+  }
+
+  // diff_drive_controller is the one upstream base controller that omits the axis from its
+  // reference interfaces; mecanum_drive_controller and omni_wheel_drive_controller keep it.
+  return {prefix + "linear" + suffix, prefix + "angular" + suffix};
+}
+
 controller_interface::InterfaceConfiguration TwistMuxController::command_interface_configuration()
   const
 {
   controller_interface::InterfaceConfiguration command_interfaces_config;
   command_interfaces_config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
-
-  if (params_.holonomic) {
-    command_interfaces_config.names.reserve(3);
-    command_interfaces_config.names.push_back(params_.command_interface_linear_x);
-    command_interfaces_config.names.push_back(params_.command_interface_linear_y);
-    command_interfaces_config.names.push_back(params_.command_interface_angular_z);
-  } else {
-    command_interfaces_config.names.reserve(2);
-    command_interfaces_config.names.push_back(params_.command_interface_linear_x);
-    command_interfaces_config.names.push_back(params_.command_interface_angular_z);
-  }
+  command_interfaces_config.names = resolve_command_interface_names();
 
   return command_interfaces_config;
 }
@@ -141,6 +155,12 @@ controller_interface::CallbackReturn TwistMuxController::on_configure(
 {
   const auto reference_interfaces_size = params_.holonomic ? 3 : 2;
   reference_interfaces_.resize(reference_interfaces_size, std::numeric_limits<double>::quiet_NaN());
+
+  // Logged because a name that no controller exports only surfaces later, as a claim failure
+  // during activation, and the message there does not say where the name came from.
+  for (const auto & name : resolve_command_interface_names()) {
+    RCLCPP_INFO(get_node()->get_logger(), "Forwarding commands to interface '%s'", name.c_str());
+  }
 
   rcl_interfaces::msg::ListParametersResult list = get_node()->list_parameters(
     {"cmd_vel_inputs"}, 10);
