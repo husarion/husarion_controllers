@@ -11,24 +11,35 @@ twist_mux_controller:
       description: "List of command velocity inputs. Each input has its unique name and contains of: topic, timeout and priority.
       The priority is in range [0, 255], where 0 is the lowest priority and 255 is the highest priority.",
     }
+  drive_controller:
+    {
+      type: string,
+      default_value: "",
+      description: "Name of the chainable drive controller to forward the winning command to.
+      When set, the command_interface_* parameters are ignored and the interface names are derived
+      from it: '<drive_controller>/linear/x|y/velocity' + '<drive_controller>/angular/z/velocity'
+      when holonomic, '<drive_controller>/linear|angular/velocity' otherwise (diff_drive_controller
+      is the one upstream base controller that omits the axis). Leave empty to keep addressing the
+      interfaces explicitly through command_interface_*.",
+    }
   command_interface_linear_x:
     {
       type: string,
       default_value: "linear/x/velocity",
-      description: "Command interface for linear velocity.",
+      description: "Command interface for linear velocity. Ignored when drive_controller is set.",
       validation: { not_empty<>: null },
     }
   command_interface_linear_y:
     {
       type: string,
       default_value: "linear/y/velocity",
-      description: "Command interface for lateral velocity.",
+      description: "Command interface for lateral velocity. Ignored when drive_controller is set.",
       validation: { not_empty<>: null },
     }
   command_interface_angular_z:
     {
       type: string,
       default_value: "angular/z/velocity",
-      description: "Command interface for angular velocity.",
+      description: "Command interface for angular velocity. Ignored when drive_controller is set.",
       validation: { not_empty<>: null },
     }
