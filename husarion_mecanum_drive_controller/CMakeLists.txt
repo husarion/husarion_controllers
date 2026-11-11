@@ -52,8 +52,20 @@ target_link_libraries(
   husarion_mecanum_drive_controller
   PUBLIC husarion_mecanum_drive_controller_parameters
          control_toolbox::rate_limiter_parameters)
-ament_target_dependencies(husarion_mecanum_drive_controller PUBLIC
-                          ${THIS_PACKAGE_INCLUDE_DEPENDS})
+target_link_libraries(
+  husarion_mecanum_drive_controller
+  PUBLIC control_toolbox::control_toolbox
+         controller_interface::controller_interface
+         geometry_msgs::geometry_msgs
+         hardware_interface::hardware_interface
+         nav_msgs::nav_msgs
+         pluginlib::pluginlib
+         rclcpp::rclcpp
+         rclcpp_lifecycle::rclcpp_lifecycle
+         rcpputils::rcpputils
+         realtime_tools::realtime_tools
+         tf2::tf2
+         tf2_msgs::tf2_msgs)
 pluginlib_export_plugin_description_file(controller_interface
                                          mecanum_drive_plugin.xml)
 

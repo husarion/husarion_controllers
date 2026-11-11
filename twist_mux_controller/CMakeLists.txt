@@ -31,7 +31,15 @@ target_include_directories(
          $<INSTALL_INTERFACE:include/twist_mux_controller>)
 target_link_libraries(twist_mux_controller
                       PUBLIC twist_mux_controller_parameters)
-ament_target_dependencies(twist_mux_controller PUBLIC ${PACKAGE_DEPENDENCIES})
+target_link_libraries(
+  twist_mux_controller
+  PUBLIC controller_interface::controller_interface
+         geometry_msgs::geometry_msgs
+         hardware_interface::hardware_interface
+         pluginlib::pluginlib
+         rclcpp::rclcpp
+         rclcpp_lifecycle::rclcpp_lifecycle
+         realtime_tools::realtime_tools)
 # Causes the visibility macros to use dllexport rather than dllimport, which is
 # appropriate when building the dll but not consuming it.
 target_compile_definitions(twist_mux_controller
