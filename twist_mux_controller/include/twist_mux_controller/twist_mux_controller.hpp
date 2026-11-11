@@ -95,6 +95,7 @@ protected:
   std::vector<std::shared_ptr<TwistMsgSubscriber>> cmd_vel_subscribers_;
   rclcpp::Publisher<StringMsg>::SharedPtr cmd_vel_source_publisher_;
   realtime_tools::RealtimePublisher<StringMsg>::SharedPtr realtime_cmd_vel_source_publisher_;
+  StringMsg cmd_vel_source_msg_;
 
 private:
   static constexpr uint kReferenceInterfacesSize = 2;

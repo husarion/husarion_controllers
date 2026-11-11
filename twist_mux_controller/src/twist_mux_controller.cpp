@@ -90,10 +90,11 @@ controller_interface::return_type TwistMuxController::update_reference_from_subs
   update_reference_interfaces(command_msg_ptr);
 
   // Publish the source of the cmd_vel
-  if (cmd_vel_source_ != source && realtime_cmd_vel_source_publisher_->trylock()) {
-    realtime_cmd_vel_source_publisher_->msg_.data = source;
-    realtime_cmd_vel_source_publisher_->unlockAndPublish();
-    cmd_vel_source_ = source;
+  if (cmd_vel_source_ != source) {
+    cmd_vel_source_msg_.data = source;
+    if (realtime_cmd_vel_source_publisher_->try_publish(cmd_vel_source_msg_)) {
+      cmd_vel_source_ = source;
+    }
   }
 
   return controller_interface::return_type::OK;
