@@ -64,11 +64,11 @@ controller_interface::return_type LowPassFilter::update_and_write_commands(
     }
   }
 
-  if (realtime_publisher_ && realtime_publisher_->trylock()) {
-    realtime_publisher_->msg_.header.stamp = time;
-    realtime_publisher_->msg_.states.interface_names = exported_state_interface_names_;
-    realtime_publisher_->msg_.states.values = state_interfaces_values_;
-    realtime_publisher_->unlockAndPublish();
+  if (realtime_publisher_) {
+    interface_values_msg_.header.stamp = time;
+    interface_values_msg_.states.interface_names = exported_state_interface_names_;
+    interface_values_msg_.states.values = state_interfaces_values_;
+    realtime_publisher_->try_publish(interface_values_msg_);
   }
 
   return controller_interface::return_type::OK;

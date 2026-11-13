@@ -66,6 +66,7 @@ protected:
   using StatePublisher = realtime_tools::RealtimePublisher<DynamicInterfaceValuesMsg>;
   rclcpp::Publisher<DynamicInterfaceValuesMsg>::SharedPtr interface_values_publisher_;
   std::unique_ptr<StatePublisher> realtime_publisher_;
+  DynamicInterfaceValuesMsg interface_values_msg_;
 
   std::shared_ptr<control_toolbox::LowPassFilter<double>> low_pass_filter_;
 };

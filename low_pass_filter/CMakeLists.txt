@@ -29,7 +29,15 @@ target_include_directories(
   low_pass_filter PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                          $<INSTALL_INTERFACE:include/low_pass_filter>)
 target_link_libraries(low_pass_filter PUBLIC low_pass_filter_parameters)
-ament_target_dependencies(low_pass_filter PUBLIC ${PACKAGE_DEPENDENCIES})
+target_link_libraries(
+  low_pass_filter
+  PUBLIC control_toolbox::control_toolbox
+         controller_interface::controller_interface
+         hardware_interface::hardware_interface
+         pluginlib::pluginlib
+         rclcpp::rclcpp
+         rclcpp_lifecycle::rclcpp_lifecycle
+         realtime_tools::realtime_tools)
 # Causes the visibility macros to use dllexport rather than dllimport, which is
 # appropriate when building the dll but not consuming it.
 target_compile_definitions(low_pass_filter
